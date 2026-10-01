@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Math Division Adventure</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka for playful child-friendly typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #fbcfe8 100%);
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .bounce-hover:hover {
+            transform: scale(1.08) translateY(-4px);
+        }
+
+        .item-icon {
+            cursor: grab;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            touch-action: none;
+        }
+
+        .item-icon:active {
+            cursor: grabbing;
+            transform: scale(1.15);
+        }
+
+        .dragging {
+            opacity: 0.5;
+        }
+
+        .drop-zone-active {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+            transform: scale(1.02);
+        }
+
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 text-slate-800 flex flex-col justify-between">
+
+    <!-- Header Controls & Title -->
+    <header class="max-w-5xl mx-auto w-full flex flex-wrap items-center justify-between gap-4 mb-4 bg-white/80 backdrop-blur-md p-4 rounded-3xl shadow-lg border-2 border-white">
+        <div class="flex items-center gap-3">
+            <span class="text-4xl">🎁</span>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600">
+                    Fun Division Adventure!
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 font-medium">Drag, share, and divide to learn!</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <!-- Audio Toggle Button -->
+            <button id="audio-toggle" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-2xl font-bold transition flex items-center gap-2 border-2 border-amber-300 shadow-sm">
+                <span id="audio-icon" class="text-xl">🔊</span>
+                <span id="audio-text" class="hidden sm:inline">Sound ON</span>
+            </button>
+            <!-- Reset Button -->
+            <button id="reset-btn" class="bg-rose-500 hover:bg-rose-600 active:scale-95 text-white px-5 py-2 rounded-2xl font-bold shadow-md transition flex items-center gap-2 border-b-4 border-rose-700">
+                <span class="text-lg">🔄</span>
+                <span>Reset All</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto w-full flex-1 flex flex-col gap-6">
+
+        <!-- Dynamic Math Banner -->
+        <section class="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 rounded-3xl p-4 sm:p-6 text-white text-center shadow-xl border-4 border-white flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3 text-2xl sm:text-4xl font-extrabold tracking-wide drop-shadow-md">
+                <span class="bg-white/20 px-4 py-2 rounded-2xl" id="math-dividend">?</span>
+                <span>÷</span>
+                <span class="bg-white/20 px-4 py-2 rounded-2xl" id="math-divisor">?</span>
+                <span>=</span>
+                <span class="bg-white text-amber-600 px-5 py-2 rounded-2xl shadow-inner border-2 border-amber-200" id="math-result">?</span>
+            </div>
+            
+            <div class="flex gap-2">
+                <button id="auto-distribute-btn" class="hidden bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold px-4 py-2.5 rounded-2xl shadow-md border-b-4 border-emerald-700 transition flex items-center gap-2">
+                    <span>✨</span> Auto-Share Magic!
+                </button>
+            </div>
+        </section>
+
+        <!-- Setup Step Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            <!-- Step 1: Pick an Icon -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-lg border-2 border-purple-100 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-purple-700 mb-1 flex items-center gap-2">
+                        <span class="bg-purple-100 text-purple-600 w-7 h-7 rounded-full inline-flex items-center justify-center text-sm">1</span>
+                        Choose Toy / Item
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-3">Pick what you want to share today!</p>
+                </div>
+                
+                <div class="flex justify-between gap-1 sm:gap-2 my-2" id="icon-selector">
+                    <!-- Icons will be dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Step 2: Set Total Items -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-lg border-2 border-blue-100 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-blue-700 mb-1 flex items-center gap-2">
+                        <span class="bg-blue-100 text-blue-600 w-7 h-7 rounded-full inline-flex items-center justify-center text-sm">2</span>
+                        How Many Items?
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-3">Total items in the Toy Chest (Dividend)</p>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="number" id="items-count" min="1" max="30" value="12" class="w-full text-center text-xl font-bold bg-slate-50 border-2 border-blue-200 rounded-2xl focus:outline-none focus:border-blue-500 py-2">
+                    <button id="generate-items-btn" class="bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold px-4 py-2 rounded-2xl shadow-md border-b-4 border-blue-700 transition whitespace-nowrap">
+                        Fill Chest
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Set Compartments -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-lg border-2 border-emerald-100 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-emerald-700 mb-1 flex items-center gap-2">
+                        <span class="bg-emerald-100 text-emerald-600 w-7 h-7 rounded-full inline-flex items-center justify-center text-sm">3</span>
+                        How Many Groups?
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-3">Number of baskets/bowls (Divisor)</p>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="number" id="groups-count" min="1" max="8" value="3" class="w-full text-center text-xl font-bold bg-slate-50 border-2 border-emerald-200 rounded-2xl focus:outline-none focus:border-emerald-500 py-2">
+                    <button id="create-groups-btn" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold px-4 py-2 rounded-2xl shadow-md border-b-4 border-emerald-700 transition whitespace-nowrap">
+                        Set Bowls
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Workspace -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-[350px]">
+
+            <!-- Item Bank / Toy Chest Container (Left/Top Column) -->
+            <div class="lg:col-span-4 bg-amber-50/90 backdrop-blur-md border-4 border-dashed border-amber-300 rounded-3xl p-5 flex flex-col shadow-inner min-h-[220px]">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-amber-800 text-lg flex items-center gap-2">
+                        <span>🧰</span> Toy Chest
+                    </h3>
+                    <span id="bank-counter" class="bg-amber-200 text-amber-900 font-bold px-3 py-1 rounded-full text-xs">
+                        0 items left
+                    </span>
+                </div>
+
+                <!-- Draggable Items Container -->
+                <div id="item-bank" class="flex-1 flex flex-wrap gap-3 content-start p-2 overflow-y-auto max-h-[320px] rounded-2xl bg-white/50">
+                    <p class="text-slate-400 text-sm text-center w-full my-auto italic">Click "Fill Chest" to place items here!</p>
+                </div>
+            </div>
+
+            <!-- Compartments / Baskets Container (Right/Bottom Column) -->
+            <div class="lg:col-span-8 bg-white/80 backdrop-blur-md rounded-3xl p-5 border-2 border-slate-100 shadow-xl flex flex-col min-h-[280px]">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-700 text-lg flex items-center gap-2">
+                        <span>🧺</span> Compartments / Baskets
+                    </h3>
+                    <p class="text-xs text-slate-500">Drag items from the Toy Chest into these baskets!</p>
+                </div>
+
+                <!-- Baskets Grid -->
+                <div id="compartments-container" class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto max-h-[400px] p-1">
+                    <p class="text-slate-400 text-sm text-center col-span-full my-auto italic">Click "Set Bowls" to create compartments!</p>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Victory Celebration Modal -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border-4 border-amber-300 transform transition-transform duration-300 scale-95 pop-in">
+            <div class="text-6xl mb-2 animate-bounce">🎉</div>
+            <h2 class="text-3xl font-extrabold text-amber-500 mb-2">Awesome Job!</h2>
+            <p id="victory-message" class="text-slate-600 font-medium text-lg mb-6 leading-relaxed">
+                You successfully divided the items equally!
+            </p>
+            <button id="modal-close-btn" class="bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-lg px-8 py-3 rounded-2xl shadow-lg border-b-4 border-orange-700 active:scale-95 transition">
+                Play Again! 🚀
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Icons Definition ---
+        const ICONS = [
+            { id: 'star', name: 'Golden Star', symbol: '⭐️' },
+            { id: 'pizza', name: 'Pizza Slice', symbol: '🍕' },
+            { id: 'balloon', name: 'Balloon', symbol: '🎈' },
+            { id: 'apple', name: 'Red Apple', symbol: '🍎' },
+            { id: 'rocket', name: 'Rocket', symbol: '🚀' }
+        ];
+
+        // --- Colors for Compartments ---
+        const BASKET_COLORS = [
+            { bg: 'bg-rose-50', border: 'border-rose-300', text: 'text-rose-600', badge: 'bg-rose-500' },
+            { bg: 'bg-sky-50', border: 'border-sky-300', text: 'text-sky-600', badge: 'bg-sky-500' },
+            { bg: 'bg-emerald-50', border: 'border-emerald-300', text: 'text-emerald-600', badge: 'bg-emerald-500' },
+            { bg: 'bg-amber-50', border: 'border-amber-300', text: 'text-amber-600', badge: 'bg-amber-500' },
+            { bg: 'bg-purple-50', border: 'border-purple-300', text: 'text-purple-600', badge: 'bg-purple-500' },
+            { bg: 'bg-pink-50', border: 'border-pink-300', text: 'text-pink-600', badge: 'bg-pink-500' },
+            { bg: 'bg-indigo-50', border: 'border-indigo-300', text: 'text-indigo-600', badge: 'bg-indigo-500' },
+            { bg: 'bg-teal-50', border: 'border-teal-300', text: 'text-teal-600', badge: 'bg-teal-500' }
+        ];
+
+        // --- App State ---
+        let selectedIcon = ICONS[0];
+        let totalItemsCount = 12;
+        let totalGroupsCount = 3;
+        let isMuted = false;
+        let draggedElement = null;
+
+        // --- Web Audio API Sound Synthesizer ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'select') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'drop') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'victory') {
+                const notes = [261.63, 329.63, 392.00, 523.25];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'sine';
+                    o.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    g.gain.setValueAtTime(0.2, now + idx * 0.1);
+                    g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
+                    o.start(now + idx * 0.1);
+                    o.stop(now + idx * 0.1 + 0.25);
+                });
+            } else if (type === 'generate') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            }
+        }
+
+        // --- DOM Elements ---
+        const iconSelectorContainer = document.getElementById('icon-selector');
+        const itemsCountInput = document.getElementById('items-count');
+        const groupsCountInput = document.getElementById('groups-count');
+        const generateItemsBtn = document.getElementById('generate-items-btn');
+        const createGroupsBtn = document.getElementById('create-groups-btn');
+        const itemBank = document.getElementById('item-bank');
+        const bankCounter = document.getElementById('bank-counter');
+        const compartmentsContainer = document.getElementById('compartments-container');
+        const mathDividend = document.getElementById('math-dividend');
+        const mathDivisor = document.getElementById('math-divisor');
+        const mathResult = document.getElementById('math-result');
+        const autoDistributeBtn = document.getElementById('auto-distribute-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const audioToggleBtn = document.getElementById('audio-toggle');
+        const audioIcon = document.getElementById('audio-icon');
+        const audioText = document.getElementById('audio-text');
+        const victoryModal = document.getElementById('victory-modal');
+        const victoryMessage = document.getElementById('victory-message');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        // --- Render Icon Selector Options ---
+        function renderIconSelector() {
+            iconSelectorContainer.innerHTML = '';
+            ICONS.forEach((icon) => {
+                const btn = document.createElement('button');
+                btn.className = `bounce-hover flex-1 text-2xl sm:text-3xl p-2 rounded-2xl border-2 transition ${
+                    selectedIcon.id === icon.id
+                        ? 'border-purple-500 bg-purple-100 shadow-md scale-105'
+                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                }`;
+                btn.title = icon.name;
+                btn.innerHTML = icon.symbol;
+                btn.addEventListener('click', () => {
+                    selectedIcon = icon;
+                    playSound('select');
+                    renderIconSelector();
+                    // Re-render bank items with new icon if bank has items
+                    if (itemBank.querySelectorAll('.item-icon').length > 0) {
+                        generateItems();
+                    }
+                });
+                iconSelectorContainer.appendChild(btn);
+            });
+        }
+
+        // --- Update Math Banner ---
+        function updateMathBanner() {
+            mathDividend.textContent = totalItemsCount;
+            mathDivisor.textContent = totalGroupsCount;
+            
+            // Check if all items are distributed
+            const itemsInBank = itemBank.querySelectorAll('.item-icon').length;
+            const compartments = document.querySelectorAll('.compartment');
+
+            if (itemsInBank === 0 && compartments.length > 0) {
+                const counts = Array.from(compartments).map(c => c.querySelectorAll('.item-icon').length);
+                const firstCount = counts[0];
+                const isEqual = counts.every(c => c === firstCount);
+
+                if (isEqual && firstCount > 0) {
+                    mathResult.textContent = firstCount;
+                    return true; // Successfully solved
+                }
+            }
+            mathResult.textContent = '?';
+            return false;
+        }
+
+        // --- Create Draggable Item Element ---
+        function createItemElement(id) {
+            const item = document.createElement('div');
+            item.className = 'item-icon text-3xl sm:text-4xl p-1 select-none pop-in inline-block';
+            item.draggable = true;
+            item.dataset.id = id || 'item-' + Math.random().toString(36).substr(2, 9);
+            item.textContent = selectedIcon.symbol;
+
+            // HTML5 Drag Events
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragend', handleDragEnd);
+
+            // Touch Support (Mobiles/Tablets)
+            item.addEventListener('touchstart', handleTouchStart, { passive: false });
+            item.addEventListener('touchmove', handleTouchMove, { passive: false });
+            item.addEventListener('touchend', handleTouchEnd);
+
+            return item;
+        }
+
+        // --- Drag & Drop Handlers (Desktop) ---
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', this.dataset.id);
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            draggedElement = null;
+            document.querySelectorAll('.drop-zone-active').forEach(el => el.classList.remove('drop-zone-active'));
+        }
+
+        // --- Touch Event Handlers (Tablet / Phone) ---
+        let touchClone = null;
+
+        function handleTouchStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+
+            const touch = e.touches[0];
+            touchClone = this.cloneNode(true);
+            touchClone.style.position = 'fixed';
+            touchClone.style.left = touch.clientX - 20 + 'px';
+            touchClone.style.top = touch.clientY - 20 + 'px';
+            touchClone.style.opacity = '0.8';
+            touchClone.style.pointerEvents = 'none';
+            touchClone.style.zIndex = '1000';
+            document.body.appendChild(touchClone);
+        }
+
+        function handleTouchMove(e) {
+            if (!touchClone) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            touchClone.style.left = touch.clientX - 20 + 'px';
+            touchClone.style.top = touch.clientY - 20 + 'px';
+
+            const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+            const dropZone = elementUnderTouch?.closest('.drop-zone');
+
+            document.querySelectorAll('.drop-zone-active').forEach(el => el.classList.remove('drop-zone-active'));
+            if (dropZone) {
+                dropZone.classList.add('drop-zone-active');
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (touchClone) {
+                touchClone.remove();
+                touchClone = null;
+            }
+
+            if (!draggedElement) return;
+
+            const touch = e.changedTouches[0];
+            const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+            const dropZone = elementUnderTouch?.closest('.drop-zone');
+
+            if (dropZone) {
+                dropItemIntoContainer(draggedElement, dropZone);
+            }
+
+            draggedElement.classList.remove('dragging');
+            draggedElement = null;
+            document.querySelectorAll('.drop-zone-active').forEach(el => el.classList.remove('drop-zone-active'));
+        }
+
+        // --- Drop Item into Zone Handler ---
+        function dropItemIntoContainer(item, targetContainer) {
+            const dropArea = targetContainer.querySelector('.items-holder') || targetContainer;
+            dropArea.appendChild(item);
+            playSound('drop');
+            updateCounters();
+            
+            // Trigger drop pulse
+            targetContainer.classList.add('scale-105');
+            setTimeout(() => targetContainer.classList.remove('scale-105'), 150);
+
+            // Check completion
+            checkCompletion();
+        }
+
+        // Setup Drop Target Events
+        function setupDropTarget(target) {
+            target.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                target.classList.add('drop-zone-active');
+            });
+
+            target.addEventListener('dragleave', () => {
+                target.classList.remove('drop-zone-active');
+            });
+
+            target.addEventListener('drop', (e) => {
+                e.preventDefault();
+                target.classList.remove('drop-zone-active');
+                if (draggedElement) {
+                    dropItemIntoContainer(draggedElement, target);
+                }
+            });
+        }
+
+        // --- Generate Items in Bank ---
+        function generateItems() {
+            totalItemsCount = parseInt(itemsCountInput.value) || 12;
+            if (totalItemsCount > 30) totalItemsCount = 30;
+            if (totalItemsCount < 1) totalItemsCount = 1;
+            itemsCountInput.value = totalItemsCount;
+
+            itemBank.innerHTML = '';
+            for (let i = 0; i < totalItemsCount; i++) {
+                const item = createItemElement();
+                itemBank.appendChild(item);
+            }
+            playSound('generate');
+            updateCounters();
+            updateMathBanner();
+            checkAutoDistributeButton();
+        }
+
+        // --- Generate Compartments ---
+        function generateGroups() {
+            totalGroupsCount = parseInt(groupsCountInput.value) || 3;
+            if (totalGroupsCount > 8) totalGroupsCount = 8;
+            if (totalGroupsCount < 1) totalGroupsCount = 1;
+            groupsCountInput.value = totalGroupsCount;
+
+            compartmentsContainer.innerHTML = '';
+            for (let i = 0; i < totalGroupsCount; i++) {
+                const style = BASKET_COLORS[i % BASKET_COLORS.length];
+                const comp = document.createElement('div');
+                comp.className = `compartment drop-zone ${style.bg} border-2 ${style.border} rounded-2xl p-3 flex flex-col justify-between shadow-sm transition-all duration-200 min-h-[140px]`;
+                
+                comp.innerHTML = `
+                    <div class="flex justify-between items-center mb-2 pointer-events-none">
+                        <span class="font-bold text-sm ${style.text}">Basket #${i + 1}</span>
+                        <span class="count-badge ${style.badge} text-white font-bold px-2.5 py-0.5 rounded-full text-xs">
+                            0
+                        </span>
+                    </div>
+                    <div class="items-holder flex-1 flex flex-wrap gap-1 content-start min-h-[70px] p-1 bg-white/60 rounded-xl border border-black/5"></div>
+                `;
+
+                setupDropTarget(comp);
+                compartmentsContainer.appendChild(comp);
+            }
+
+            playSound('generate');
+            updateMathBanner();
+            checkAutoDistributeButton();
+        }
+
+        // --- Update Item Counters ---
+        function updateCounters() {
+            const bankItems = itemBank.querySelectorAll('.item-icon').length;
+            bankCounter.textContent = `${bankItems} item${bankItems === 1 ? '' : 's'} left`;
+
+            document.querySelectorAll('.compartment').forEach((comp) => {
+                const count = comp.querySelectorAll('.item-icon').length;
+                const badge = comp.querySelector('.count-badge');
+                if (badge) badge.textContent = count;
+            });
+
+            updateMathBanner();
+        }
+
+        // Enable/Disable Auto Distribute button
+        function checkAutoDistributeButton() {
+            const compartments = document.querySelectorAll('.compartment');
+            if (compartments.length > 0 && totalItemsCount > 0) {
+                autoDistributeBtn.classList.remove('hidden');
+            } else {
+                autoDistributeBtn.classList.add('hidden');
+            }
+        }
+
+        // --- Auto-Share Magic Animation ---
+        async function autoDistribute() {
+            const items = Array.from(itemBank.querySelectorAll('.item-icon'));
+            const compartments = document.querySelectorAll('.compartment');
+
+            if (items.length === 0 || compartments.length === 0) return;
+
+            autoDistributeBtn.disabled = true;
+            autoDistributeBtn.classList.add('opacity-50');
+
+            for (let i = 0; i < items.length; i++) {
+                const targetComp = compartments[i % compartments.length];
+                dropItemIntoContainer(items[i], targetComp);
+                await new Promise(resolve => setTimeout(resolve, 180));
+            }
+
+            autoDistributeBtn.disabled = false;
+            autoDistributeBtn.classList.remove('opacity-50');
+        }
+
+        // --- Completion Verification ---
+        function checkCompletion() {
+            const bankItems = itemBank.querySelectorAll('.item-icon').length;
+            const isSolved = updateMathBanner();
+
+            if (bankItems === 0 && isSolved) {
+                const result = totalItemsCount / totalGroupsCount;
+                if (Number.isInteger(result)) {
+                    showVictory(
+                        `Awesome job! 🌟<br><span class="font-bold text-amber-600 text-xl">${totalItemsCount}</span> divided into <span class="font-bold text-emerald-600 text-xl">${totalGroupsCount}</span> equal baskets gives <span class="font-bold text-indigo-600 text-2xl">${result}</span> in each basket!`
+                    );
+                } else {
+                    showVictory(
+                        `Good try! You placed all items in the baskets!<br>To have equal groups, try a number that divides evenly!`
+                    );
+                }
+            }
+        }
+
+        // --- Show Victory Modal with Confetti ---
+        function showVictory(msg) {
+            playSound('victory');
+            victoryMessage.innerHTML = msg;
+            victoryModal.classList.remove('hidden');
+
+            // Trigger Confetti Party
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        // --- Full Reset Game ---
+        function resetGame() {
+            itemsCountInput.value = 12;
+            groupsCountInput.value = 3;
+            renderIconSelector();
+            generateItems();
+            generateGroups();
+            updateCounters();
+        }
+
+        // --- Event Listeners Setup ---
+        generateItemsBtn.addEventListener('click', generateItems);
+        createGroupsBtn.addEventListener('click', generateGroups);
+        autoDistributeBtn.addEventListener('click', autoDistribute);
+        resetBtn.addEventListener('click', () => {
+            playSound('select');
+            resetGame();
+        });
+
+        // Setup drop target on Item Bank so items can be returned back
+        setupDropTarget(itemBank);
+
+        // Sound Toggle
+        audioToggleBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            audioIcon.textContent = isMuted ? '🔇' : '🔊';
+            audioText.textContent = isMuted ? 'Sound OFF' : 'Sound ON';
+            if (!isMuted) playSound('select');
+        });
+
+        // Modal Close
+        modalCloseBtn.addEventListener('click', () => {
+            victoryModal.classList.add('hidden');
+            resetGame();
+        });
+
+        // Initialize App on window load
+        window.onload = function() {
+            renderIconSelector();
+            generateItems();
+            generateGroups();
+        };
+    </script>
+</body>
+</html>

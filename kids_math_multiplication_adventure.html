@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Math Multiplication Adventure</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka for playful typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #fef08a 0%, #fed7aa 40%, #fbcfe8 100%);
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .bounce-hover:hover {
+            transform: scale(1.08) translateY(-3px);
+        }
+
+        .row-card {
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+        }
+
+        .item-icon {
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .item-icon:hover {
+            transform: scale(1.3) rotate(8deg);
+        }
+
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .draggable-row {
+            cursor: grab;
+            touch-action: none;
+        }
+
+        .draggable-row:active {
+            cursor: grabbing;
+            transform: scale(1.03);
+        }
+
+        .drop-zone-active {
+            border-color: #ec4899 !important;
+            background-color: #fce7f3 !important;
+            transform: scale(1.01);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 text-slate-800 flex flex-col justify-between min-h-screen">
+
+    <!-- Header Controls & Title -->
+    <header class="max-w-5xl mx-auto w-full flex flex-wrap items-center justify-between gap-4 mb-4 bg-white/90 backdrop-blur-md p-4 rounded-3xl shadow-lg border-2 border-white">
+        <div class="flex items-center gap-3">
+            <span class="text-4xl animate-bounce">✖️</span>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600">
+                    Multiplication Magic!
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 font-medium">Build math arrays and practice multiplication hands-on!</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <!-- Audio Toggle Button -->
+            <button id="audio-toggle" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-2xl font-bold transition flex items-center gap-2 border-2 border-amber-300 shadow-sm">
+                <span id="audio-icon" class="text-xl">🔊</span>
+                <span id="audio-text" class="hidden sm:inline">Sound ON</span>
+            </button>
+            <!-- Reset Everything Button -->
+            <button id="reset-everything-btn" class="bg-rose-500 hover:bg-rose-600 active:scale-95 text-white px-5 py-2 rounded-2xl font-bold shadow-md transition flex items-center gap-2 border-b-4 border-rose-700">
+                <span class="text-lg">🔄</span>
+                <span>Reset Everything</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto w-full flex-1 flex flex-col gap-5">
+
+        <!-- Dynamic Math Banner & Repeated Addition -->
+        <section class="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 rounded-3xl p-4 sm:p-5 text-white text-center shadow-xl border-4 border-white flex flex-col items-center justify-center gap-2">
+            <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xl sm:text-3xl font-extrabold tracking-wide drop-shadow-md">
+                <span id="math-groups-display" class="bg-white/20 px-3.5 py-1.5 rounded-2xl">0</span>
+                <span>groups of</span>
+                <span id="math-items-display" class="bg-white/20 px-3.5 py-1.5 rounded-2xl">4</span>
+                <span>=</span>
+                <span id="math-equation-display" class="bg-white/20 px-3.5 py-1.5 rounded-2xl">0 × 4</span>
+                <span>=</span>
+                <span id="math-total-display" class="bg-white text-amber-600 px-4 py-1.5 rounded-2xl shadow-inner border-2 border-amber-200">0</span>
+            </div>
+            
+            <div id="repeated-addition-display" class="text-xs sm:text-base font-semibold bg-black/15 px-4 py-1 rounded-full mt-1 border border-white/20">
+                Repeated Addition: <span id="addition-formula" class="underline decoration-wavy decoration-amber-200">Board is empty - drag or populate rows!</span>
+            </div>
+        </section>
+
+        <!-- Setup Step Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            <!-- Step 1: Pick an Icon -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-4 shadow-lg border-2 border-purple-100 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-purple-700 mb-1 flex items-center gap-2">
+                        <span class="bg-purple-100 text-purple-600 w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">1</span>
+                        1. Choose Toy / Icon
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-2">Pick an item to multiply!</p>
+                </div>
+                
+                <div class="flex justify-between gap-1" id="icon-selector">
+                    <!-- Icons dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Step 2: Set Items Per Row -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-4 shadow-lg border-2 border-blue-100 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-blue-700 mb-1 flex items-center gap-2">
+                        <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">2</span>
+                        2. Items Per Row (1st No.)
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-2">How many items in 1 row?</p>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="number" id="row-size-input" min="1" max="10" value="4" class="w-full text-center text-lg font-bold bg-slate-50 border-2 border-blue-200 rounded-2xl focus:outline-none focus:border-blue-500 py-1.5">
+                    <button id="set-row-pattern-btn" class="bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold px-3 py-1.5 rounded-2xl shadow-md border-b-4 border-blue-700 transition whitespace-nowrap text-xs sm:text-sm">
+                        Set Pattern 🎨
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Multiplier Goal & Options -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-4 shadow-lg border-2 border-emerald-100 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-emerald-700 mb-1 flex items-center gap-2">
+                        <span class="bg-emerald-100 text-emerald-600 w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">3</span>
+                        3. Target Rows (Multiplier)
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-2">Multiplier goal (e.g. 5 rows)</p>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="number" id="multiplier-input" min="1" max="10" value="5" class="w-full text-center text-lg font-bold bg-slate-50 border-2 border-emerald-200 rounded-2xl focus:outline-none focus:border-emerald-500 py-1.5">
+                    <button id="populate-full-board-btn" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold px-3 py-1.5 rounded-2xl shadow-md border-b-4 border-emerald-700 transition whitespace-nowrap text-xs sm:text-sm">
+                        Build Board 🚀
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Workspace -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-[350px]">
+
+            <!-- Left Column: Single Row Template & Drag Builder Source -->
+            <div class="lg:col-span-4 bg-amber-50/90 backdrop-blur-md border-4 border-dashed border-amber-300 rounded-3xl p-4 flex flex-col shadow-inner min-h-[220px]">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-amber-900 text-base flex items-center gap-1.5">
+                        <span>🧪</span> Single Row Model
+                    </h3>
+                    <span id="single-row-count" class="bg-amber-200 text-amber-900 font-bold px-2.5 py-0.5 rounded-full text-xs">
+                        4 items
+                    </span>
+                </div>
+
+                <!-- Active Template Preview -->
+                <div id="template-row-container" class="bg-white/80 p-3 rounded-2xl border-2 border-amber-200 mb-3 shadow-sm flex items-center justify-center gap-2 min-h-[70px] overflow-x-auto">
+                    <!-- Displayed icons of 1 row -->
+                </div>
+
+                <!-- Drag Helper Box -->
+                <div class="mt-auto bg-amber-100/80 p-3.5 rounded-2xl border-2 border-amber-200 text-center">
+                    <p class="text-xs font-bold text-amber-800 mb-1">🖐️ Drag or Add Rows Manually!</p>
+                    <p class="text-[11px] text-slate-600 mb-2">Drag this row onto the board to build your array row-by-row!</p>
+                    
+                    <div id="drag-row-source" class="draggable-row bg-white p-2.5 rounded-2xl shadow-md border-2 border-amber-400 flex items-center justify-center gap-2 cursor-grab active:cursor-grabbing hover:bg-amber-50 transition" draggable="true">
+                        <span class="text-xs font-bold text-amber-700">Drag 1 Row 🖐️</span>
+                        <div id="drag-source-icons" class="flex gap-1 text-lg"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Multiplication Array Grid Board -->
+            <div class="lg:col-span-8 bg-white/85 backdrop-blur-md rounded-3xl p-4 border-2 border-slate-100 shadow-xl flex flex-col min-h-[320px]">
+                <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base flex items-center gap-1.5">
+                            <span>✨</span> Array Workspace Board
+                        </h3>
+                        <p class="text-xs text-slate-500">Drop rows here, add/remove rows, or clear board to start over!</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Add Row Button -->
+                        <button id="add-row-manual-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs px-3 py-1.5 rounded-xl border border-indigo-200 transition flex items-center gap-1 active:scale-95 shadow-sm">
+                            <span>➕</span> Add 1 Row
+                        </button>
+
+                        <!-- REMOVE 1 ROW BUTTON -->
+                        <button id="remove-row-btn" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-xs px-3 py-1.5 rounded-xl border border-amber-300 transition flex items-center gap-1 shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
+                            <span>➖</span> Remove 1 Row
+                        </button>
+
+                        <!-- CLEAR BOARD BUTTON -->
+                        <button id="clear-board-btn" class="bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold text-xs px-3 py-1.5 rounded-xl border border-rose-300 transition flex items-center gap-1 shadow-sm active:scale-95">
+                            <span>🗑️</span> Clear Board
+                        </button>
+
+                        <!-- CHECK ANSWER BUTTON -->
+                        <button id="verify-ans-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow border-b-2 border-emerald-700 active:scale-95 transition flex items-center gap-1">
+                            <span>🌟</span> Check Answer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Array Grid Drop Zone -->
+                <div id="array-container" class="drop-zone flex-1 bg-slate-50/90 rounded-2xl p-3 border-2 border-dashed border-slate-300 flex flex-col gap-2.5 overflow-y-auto max-h-[380px] min-h-[200px]">
+                    <!-- Board starts empty or populated on demand -->
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Victory Celebration Modal -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border-4 border-amber-300 transform transition-transform duration-300 scale-95 pop-in">
+            <div class="text-6xl mb-2 animate-bounce">🌟</div>
+            <h2 class="text-3xl font-extrabold text-amber-500 mb-2">Awesome Math Job!</h2>
+            <p id="victory-message" class="text-slate-600 font-medium text-base mb-6 leading-relaxed">
+                You constructed the full multiplication array!
+            </p>
+            <button id="modal-close-btn" class="bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-lg px-8 py-3 rounded-2xl shadow-lg border-b-4 border-orange-700 active:scale-95 transition">
+                Keep Exploring! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Game Engine -->
+    <script>
+        // --- Game Icons Definition ---
+        const ICONS = [
+            { id: 'star', name: 'Golden Star', symbol: '⭐️' },
+            { id: 'pizza', name: 'Pizza Slice', symbol: '🍕' },
+            { id: 'balloon', name: 'Balloon', symbol: '🎈' },
+            { id: 'apple', name: 'Red Apple', symbol: '🍎' },
+            { id: 'rocket', name: 'Rocket', symbol: '🚀' }
+        ];
+
+        // --- Row Color Palette ---
+        const ROW_STYLES = [
+            { bg: 'bg-amber-50', border: 'border-amber-300', badge: 'bg-amber-500' },
+            { bg: 'bg-blue-50', border: 'border-blue-300', badge: 'bg-blue-500' },
+            { bg: 'bg-emerald-50', border: 'border-emerald-300', badge: 'bg-emerald-500' },
+            { bg: 'bg-purple-50', border: 'border-purple-300', badge: 'bg-purple-500' },
+            { bg: 'bg-pink-50', border: 'border-pink-300', badge: 'bg-pink-500' },
+            { bg: 'bg-indigo-50', border: 'border-indigo-300', badge: 'bg-indigo-500' },
+            { bg: 'bg-teal-50', border: 'border-teal-300', badge: 'bg-teal-500' },
+            { bg: 'bg-rose-50', border: 'border-rose-300', badge: 'bg-rose-500' }
+        ];
+
+        // --- Game State ---
+        let selectedIcon = ICONS[0];
+        let itemsPerRow = 4;
+        let targetMultiplier = 5;
+        let isMuted = false;
+
+        // --- Web Audio Synthesizer ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+
+        function playSound(type, notePitch = 1) {
+            if (isMuted) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'select') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400 * notePitch, now);
+                osc.frequency.exponentialRampToValueAtTime(700 * notePitch, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'pop') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300 * notePitch, now);
+                osc.frequency.exponentialRampToValueAtTime(500 * notePitch, now + 0.12);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            } else if (type === 'clear') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(350, now);
+                osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'victory') {
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'sine';
+                    o.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    g.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
+                    o.start(now + idx * 0.08);
+                    o.stop(now + idx * 0.08 + 0.2);
+                });
+            } else if (type === 'generate') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            }
+        }
+
+        // --- DOM Elements ---
+        const iconSelectorContainer = document.getElementById('icon-selector');
+        const rowSizeInput = document.getElementById('row-size-input');
+        const multiplierInput = document.getElementById('multiplier-input');
+        const setRowPatternBtn = document.getElementById('set-row-pattern-btn');
+        const populateFullBoardBtn = document.getElementById('populate-full-board-btn');
+        const templateRowContainer = document.getElementById('template-row-container');
+        const singleRowCount = document.getElementById('single-row-count');
+        const arrayContainer = document.getElementById('array-container');
+        const dragRowSource = document.getElementById('drag-row-source');
+        const dragSourceIcons = document.getElementById('drag-source-icons');
+        
+        const mathGroupsDisplay = document.getElementById('math-groups-display');
+        const mathItemsDisplay = document.getElementById('math-items-display');
+        const mathEquationDisplay = document.getElementById('math-equation-display');
+        const mathTotalDisplay = document.getElementById('math-total-display');
+        const additionFormula = document.getElementById('addition-formula');
+
+        const addRowManualBtn = document.getElementById('add-row-manual-btn');
+        const removeRowBtn = document.getElementById('remove-row-btn');
+        const clearBoardBtn = document.getElementById('clear-board-btn');
+        const verifyAnsBtn = document.getElementById('verify-ans-btn');
+        const resetEverythingBtn = document.getElementById('reset-everything-btn');
+        const audioToggleBtn = document.getElementById('audio-toggle');
+        const audioIcon = document.getElementById('audio-icon');
+        const audioText = document.getElementById('audio-text');
+        const victoryModal = document.getElementById('victory-modal');
+        const victoryMessage = document.getElementById('victory-message');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        // --- Render Icon Picker ---
+        function renderIconSelector() {
+            iconSelectorContainer.innerHTML = '';
+            ICONS.forEach((icon) => {
+                const btn = document.createElement('button');
+                btn.className = `bounce-hover flex-1 text-2xl p-1.5 rounded-2xl border-2 transition ${
+                    selectedIcon.id === icon.id
+                        ? 'border-purple-500 bg-purple-100 shadow scale-105'
+                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                }`;
+                btn.title = icon.name;
+                btn.innerHTML = icon.symbol;
+                btn.addEventListener('click', () => {
+                    selectedIcon = icon;
+                    playSound('select');
+                    renderIconSelector();
+                    updateTemplateRow();
+                    refreshExistingRowsOnBoard();
+                });
+                iconSelectorContainer.appendChild(btn);
+            });
+        }
+
+        // --- Step 2: Set Row Model Pattern ---
+        function updateTemplateRow() {
+            itemsPerRow = parseInt(rowSizeInput.value) || 4;
+            if (itemsPerRow > 10) itemsPerRow = 10;
+            if (itemsPerRow < 1) itemsPerRow = 1;
+            rowSizeInput.value = itemsPerRow;
+
+            singleRowCount.textContent = `${itemsPerRow} item${itemsPerRow === 1 ? '' : 's'}`;
+
+            // Render Single Row Model Preview
+            templateRowContainer.innerHTML = '';
+            for (let i = 0; i < itemsPerRow; i++) {
+                const icon = document.createElement('span');
+                icon.className = 'item-icon text-2xl pop-in inline-block';
+                icon.textContent = selectedIcon.symbol;
+                templateRowContainer.appendChild(icon);
+            }
+
+            // Render Drag Source Icons Preview
+            dragSourceIcons.innerHTML = '';
+            const previewCount = Math.min(itemsPerRow, 4);
+            for (let i = 0; i < previewCount; i++) {
+                const s = document.createElement('span');
+                s.textContent = selectedIcon.symbol;
+                dragSourceIcons.appendChild(s);
+            }
+            if (itemsPerRow > 4) {
+                const extra = document.createElement('span');
+                extra.className = 'text-xs font-bold text-amber-600 my-auto';
+                extra.textContent = `+${itemsPerRow - 4}`;
+                dragSourceIcons.appendChild(extra);
+            }
+
+            updateMathBanner();
+        }
+
+        // --- Real-time Equation & Addition Banner ---
+        function updateMathBanner() {
+            const currentRows = arrayContainer.querySelectorAll('.row-card').length;
+            const totalItems = currentRows * itemsPerRow;
+
+            mathGroupsDisplay.textContent = currentRows;
+            mathItemsDisplay.textContent = itemsPerRow;
+            mathEquationDisplay.textContent = `${currentRows} × ${itemsPerRow}`;
+            mathTotalDisplay.textContent = totalItems;
+
+            // Enable or disable the -1 Row button based on board contents
+            if (removeRowBtn) {
+                removeRowBtn.disabled = currentRows === 0;
+            }
+
+            if (currentRows > 0) {
+                const additions = Array(currentRows).fill(itemsPerRow).join(' + ');
+                additionFormula.textContent = `${additions} = ${totalItems}`;
+            } else {
+                additionFormula.textContent = 'Board is empty - drag or populate rows!';
+            }
+        }
+
+        // --- Create Single Row Element ---
+        function createRowElement(rowIndex) {
+            const style = ROW_STYLES[rowIndex % ROW_STYLES.length];
+            const rowCard = document.createElement('div');
+            rowCard.className = `row-card ${style.bg} border-2 ${style.border} rounded-2xl p-2.5 flex items-center justify-between shadow-sm pop-in`;
+
+            let iconsHtml = '';
+            for (let i = 0; i < itemsPerRow; i++) {
+                iconsHtml += `<span class="item-icon text-2xl inline-block cursor-pointer p-0.5">${selectedIcon.symbol}</span>`;
+            }
+
+            rowCard.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="${style.badge} text-white font-bold text-xs px-2.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
+                        Group #${rowIndex + 1}
+                    </span>
+                    <span class="text-[11px] font-semibold text-slate-500">(${itemsPerRow} items)</span>
+                </div>
+                <div class="flex flex-wrap gap-1 items-center justify-end flex-1 ml-2">
+                    ${iconsHtml}
+                </div>
+            `;
+
+            rowCard.addEventListener('click', () => {
+                playSound('pop', 0.8 + (rowIndex * 0.1));
+                rowCard.classList.add('scale-[1.02]');
+                setTimeout(() => rowCard.classList.remove('scale-[1.02]'), 150);
+            });
+
+            return rowCard;
+        }
+
+        // --- Option A: Populate Full Board on Demand ---
+        function populateFullBoard() {
+            targetMultiplier = parseInt(multiplierInput.value) || 5;
+            if (targetMultiplier > 10) targetMultiplier = 10;
+            if (targetMultiplier < 1) targetMultiplier = 1;
+            multiplierInput.value = targetMultiplier;
+
+            itemsPerRow = parseInt(rowSizeInput.value) || 4;
+
+            arrayContainer.innerHTML = '';
+            for (let i = 0; i < targetMultiplier; i++) {
+                const row = createRowElement(i);
+                arrayContainer.appendChild(row);
+            }
+
+            playSound('generate');
+            updateMathBanner();
+        }
+
+        // --- Option B: Add 1 Row Manually or Dragged ---
+        function addSingleRow() {
+            const currentCount = arrayContainer.querySelectorAll('.row-card').length;
+            if (currentCount >= 10) return; 
+            const newRow = createRowElement(currentCount);
+            arrayContainer.appendChild(newRow);
+            playSound('pop', 1 + (currentCount * 0.08));
+            updateMathBanner();
+        }
+
+        // --- Option C: Remove 1 Row Manually ---
+        function removeSingleRow() {
+            const rows = arrayContainer.querySelectorAll('.row-card');
+            if (rows.length === 0) return;
+            
+            const lastRow = rows[rows.length - 1];
+            lastRow.classList.add('scale-0', 'opacity-0');
+            setTimeout(() => {
+                lastRow.remove();
+                playSound('clear');
+                updateMathBanner();
+            }, 150);
+        }
+
+        // --- Clear Workspace Board Only ---
+        function clearBoard() {
+            arrayContainer.innerHTML = '';
+            playSound('clear');
+            updateMathBanner();
+        }
+
+        // --- Refresh Icons if changed while items are on board ---
+        function refreshExistingRowsOnBoard() {
+            const currentRowsCount = arrayContainer.querySelectorAll('.row-card').length;
+            arrayContainer.innerHTML = '';
+            for (let i = 0; i < currentRowsCount; i++) {
+                const row = createRowElement(i);
+                arrayContainer.appendChild(row);
+            }
+            updateMathBanner();
+        }
+
+        // --- Drag & Drop Handlers ---
+        function setupDragAndDrop() {
+            dragRowSource.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', 'row');
+                e.dataTransfer.effectAllowed = 'copy';
+                dragRowSource.classList.add('opacity-60');
+            });
+
+            dragRowSource.addEventListener('dragend', () => {
+                dragRowSource.classList.remove('opacity-60');
+            });
+
+            arrayContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+                arrayContainer.classList.add('drop-zone-active');
+            });
+
+            arrayContainer.addEventListener('dragleave', () => {
+                arrayContainer.classList.remove('drop-zone-active');
+            });
+
+            arrayContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                arrayContainer.classList.remove('drop-zone-active');
+                addSingleRow();
+            });
+
+            // Touch Drag Support
+            let touchClone = null;
+
+            dragRowSource.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                touchClone = dragRowSource.cloneNode(true);
+                touchClone.style.position = 'fixed';
+                touchClone.style.left = touch.clientX - 50 + 'px';
+                touchClone.style.top = touch.clientY - 20 + 'px';
+                touchClone.style.opacity = '0.85';
+                touchClone.style.pointerEvents = 'none';
+                touchClone.style.zIndex = '1000';
+                document.body.appendChild(touchClone);
+            }, { passive: false });
+
+            dragRowSource.addEventListener('touchmove', (e) => {
+                if (!touchClone) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                touchClone.style.left = touch.clientX - 50 + 'px';
+                touchClone.style.top = touch.clientY - 20 + 'px';
+
+                const dropElem = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (dropElem && dropElem.closest('#array-container')) {
+                    arrayContainer.classList.add('drop-zone-active');
+                } else {
+                    arrayContainer.classList.remove('drop-zone-active');
+                }
+            }, { passive: false });
+
+            dragRowSource.addEventListener('touchend', (e) => {
+                if (touchClone) {
+                    touchClone.remove();
+                    touchClone = null;
+                }
+                const touch = e.changedTouches[0];
+                const dropElem = document.elementFromPoint(touch.clientX, touch.clientY);
+                arrayContainer.classList.remove('drop-zone-active');
+                if (dropElem && dropElem.closest('#array-container')) {
+                    addSingleRow();
+                }
+            });
+        }
+
+        // --- Victory Check & Celebration Modal ---
+        function triggerVictoryModal() {
+            const currentRows = arrayContainer.querySelectorAll('.row-card').length;
+            const total = currentRows * itemsPerRow;
+
+            if (currentRows === 0) {
+                alert("Add or build some rows on the board first before checking your answer!");
+                return;
+            }
+            
+            playSound('victory');
+            victoryMessage.innerHTML = `You created <span class="font-bold text-amber-600 text-xl">${currentRows}</span> groups of <span class="font-bold text-blue-600 text-xl">${itemsPerRow}</span>!<br><span class="text-2xl font-black text-emerald-600">${currentRows} × ${itemsPerRow} = ${total}</span>`;
+            victoryModal.classList.remove('hidden');
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 110,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        // --- Reset Everything ---
+        function resetEverything() {
+            rowSizeInput.value = 4;
+            multiplierInput.value = 5;
+            selectedIcon = ICONS[0];
+            
+            renderIconSelector();
+            updateTemplateRow();
+            clearBoard();
+
+            victoryModal.classList.add('hidden');
+        }
+
+        // --- Event Listeners ---
+        setRowPatternBtn.addEventListener('click', () => {
+            playSound('select');
+            updateTemplateRow();
+            refreshExistingRowsOnBoard();
+        });
+
+        populateFullBoardBtn.addEventListener('click', () => {
+            populateFullBoard();
+        });
+
+        addRowManualBtn.addEventListener('click', () => addSingleRow());
+
+        removeRowBtn.addEventListener('click', () => removeSingleRow());
+
+        clearBoardBtn.addEventListener('click', () => clearBoard());
+
+        verifyAnsBtn.addEventListener('click', () => {
+            triggerVictoryModal();
+        });
+
+        resetEverythingBtn.addEventListener('click', () => {
+            playSound('select');
+            resetEverything();
+        });
+
+        audioToggleBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            audioIcon.textContent = isMuted ? '🔇' : '🔊';
+            audioText.textContent = isMuted ? 'Sound OFF' : 'Sound ON';
+            if (!isMuted) playSound('select');
+        });
+
+        modalCloseBtn.addEventListener('click', () => {
+            victoryModal.classList.add('hidden');
+        });
+
+        // Initialize application cleanly on window load
+        window.onload = function() {
+            renderIconSelector();
+            updateTemplateRow();
+            setupDragAndDrop();
+            // Workspace board stays empty initially
+            updateMathBanner();
+        };
+    </script>
+</body>
+</html>
