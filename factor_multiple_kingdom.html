@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factor & Multiple Kingdom 🦊 Castle of Numbers</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #A7F3D0 0%, #FDE68A 50%, #FECDD3 100%);
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        .bouncy-btn {
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
+        }
+        .bouncy-btn:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        .bouncy-btn:active {
+            transform: translateY(2px) scale(0.97);
+        }
+
+        .nav-tab.active {
+            background-color: #4F46E5;
+            color: white;
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+        }
+
+        /* Number Grid Tile Styling */
+        .grid-tile {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .grid-tile.multiple-active {
+            background-color: #F59E0B !important;
+            color: white !important;
+            transform: scale(1.15);
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.8);
+            border-color: #FFF !important;
+        }
+        .grid-tile.factor-active {
+            background-color: #10B981 !important;
+            color: white !important;
+            transform: scale(1.12);
+            z-index: 9;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.7);
+        }
+
+        /* Balloon popping animation */
+        @keyframes floatUp {
+            0% { transform: translateY(110%) rotate(0deg); }
+            50% { transform: translateY(50%) rotate(4deg); }
+            100% { transform: translateY(-120%) rotate(-4deg); }
+        }
+        .balloon {
+            position: absolute;
+            animation-name: floatUp;
+            animation-timing-function: linear;
+            cursor: pointer;
+        }
+        .balloon:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Frog lily pad bounce */
+        @keyframes frogJump {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.1); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        .frog-jumping {
+            animation: frogJump 0.5s ease-out;
+        }
+
+        /* Mascot idle animation */
+        @keyframes mascotWiggle {
+            0%, 100% { transform: rotate(-3deg) translateY(0); }
+            50% { transform: rotate(3deg) translateY(-5px); }
+        }
+        .mascot-anim {
+            animation: mascotWiggle 3s infinite ease-in-out;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #818CF8;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-5 text-gray-800 flex flex-col justify-between min-h-screen">
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto w-full mb-4">
+        <div class="bg-white/90 backdrop-blur-md rounded-3xl p-4 sm:p-5 shadow-xl border-4 border-white flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-400 p-3 rounded-2xl shadow-inner text-3xl mascot-anim">
+                    🦊
+                </div>
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+                        Factor & Multiple Kingdom
+                    </h1>
+                    <p class="text-xs sm:text-sm text-gray-500 font-bold">Discover numbers, pop balloons & help the frog leap!</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="flex flex-wrap justify-center bg-gray-100 p-1.5 rounded-2xl border-2 border-gray-200 gap-1">
+                <button onclick="switchTab('explorer')" id="tab-explorer" class="nav-tab active px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5">
+                    <span>🔍</span> Visual Explorer
+                </button>
+                <button onclick="switchTab('balloon')" id="tab-balloon" class="nav-tab px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 transition-all flex items-center gap-1.5">
+                    <span>🎈</span> Factor Pop!
+                </button>
+                <button onclick="switchTab('frog')" id="tab-frog" class="nav-tab px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 transition-all flex items-center gap-1.5">
+                    <span>🐸</span> Multiple Leap
+                </button>
+                <button onclick="switchTab('quiz')" id="tab-quiz" class="nav-tab px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 transition-all flex items-center gap-1.5">
+                    <span>🎁</span> Mystery Quiz
+                </button>
+            </div>
+
+            <!-- Sound & Help Controls -->
+            <div class="flex items-center gap-2">
+                <button onclick="toggleSound()" id="sound-btn" class="bouncy-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 p-2.5 rounded-2xl border-2 border-yellow-300 font-bold text-sm flex items-center gap-1">
+                    <span id="sound-icon">🔊</span>
+                </button>
+                <button onclick="toggleConceptGuide()" class="bouncy-btn bg-pink-100 hover:bg-pink-200 text-pink-700 px-3 py-2.5 rounded-2xl border-2 border-pink-300 font-bold text-xs sm:text-sm flex items-center gap-1">
+                    <span>💡</span> Learn Rules
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Felix the Fox Mascot Helper Bar -->
+    <div class="max-w-6xl mx-auto w-full mb-4">
+        <div class="bg-indigo-900/90 text-white rounded-2xl p-3 sm:p-4 shadow-lg border-2 border-indigo-400 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="text-3xl sm:text-4xl">🦊</div>
+                <div>
+                    <span class="text-[10px] sm:text-xs uppercase font-extrabold text-amber-300 tracking-wider">Felix the Factor Fox says:</span>
+                    <p id="mascot-speech" class="text-xs sm:text-sm font-semibold text-indigo-100">"Welcome! Factors are numbers that multiply inside a target. Multiples are skip-counting numbers!"</p>
+                </div>
+            </div>
+            <button onclick="speakMascotText()" class="bouncy-btn shrink-0 bg-indigo-700 hover:bg-indigo-600 text-indigo-200 px-3 py-1.5 rounded-xl text-xs font-bold border border-indigo-500 flex items-center gap-1">
+                <span>📢</span> Hear Felix
+            </button>
+        </div>
+    </div>
+
+    <!-- Concept Guide Drawer / Modal -->
+    <div id="concept-guide" class="hidden max-w-6xl mx-auto w-full mb-4">
+        <div class="bg-white rounded-3xl p-5 shadow-xl border-4 border-amber-300 grid grid-cols-1 md:grid-cols-2 gap-4 relative">
+            <button onclick="toggleConceptGuide()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 font-bold text-lg bg-gray-100 w-8 h-8 rounded-full flex items-center justify-center">✕</button>
+
+            <!-- Factors Card -->
+            <div class="bg-emerald-50 border-2 border-emerald-300 p-4 rounded-2xl">
+                <h3 class="text-base font-extrabold text-emerald-800 flex items-center gap-2 mb-2">
+                    <span class="text-xl">🧩</span> What are FACTORS?
+                </h3>
+                <p class="text-xs text-emerald-900 mb-2 leading-relaxed">
+                    <strong>Factors</strong> are the smaller numbers that multiply together to make a bigger number! They fit evenly inside with no leftovers.
+                </p>
+                <div class="bg-white p-2.5 rounded-xl border border-emerald-200 text-xs text-gray-700">
+                    <span class="font-bold text-emerald-700">Example for 12:</span><br>
+                    • 1 × 12 = 12<br>
+                    • 2 × 6 = 12<br>
+                    • 3 × 4 = 12<br>
+                    <span class="font-bold text-emerald-800">Factors of 12 = 1, 2, 3, 4, 6, 12</span>
+                </div>
+            </div>
+
+            <!-- Multiples Card -->
+            <div class="bg-amber-50 border-2 border-amber-300 p-4 rounded-2xl">
+                <h3 class="text-base font-extrabold text-amber-800 flex items-center gap-2 mb-2">
+                    <span class="text-xl">🚀</span> What are MULTIPLES?
+                </h3>
+                <p class="text-xs text-amber-900 mb-2 leading-relaxed">
+                    <strong>Multiples</strong> are what you get when you multiply a number by 1, 2, 3, 4, etc. Think of skip-counting!
+                </p>
+                <div class="bg-white p-2.5 rounded-xl border border-amber-200 text-xs text-gray-700">
+                    <span class="font-bold text-amber-700">Example for 4:</span><br>
+                    • 4 × 1 = <strong>4</strong><br>
+                    • 4 × 2 = <strong>8</strong><br>
+                    • 4 × 3 = <strong>12</strong>, 16, 20, 24...<br>
+                    <span class="font-bold text-amber-800">Multiples of 4 = 4, 8, 12, 16, 20...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTENT PANELS -->
+    <main class="max-w-6xl mx-auto w-full flex-grow flex flex-col gap-5">
+
+        <!-- MODULE 1: Factor Explorer & Multiples Visualizer -->
+        <section id="module-explorer" class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            <!-- Left Controls & Array Visualizer -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+                
+                <!-- Input Control -->
+                <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-xl border-4 border-white flex flex-col gap-3">
+                    <label class="text-sm font-extrabold text-gray-700 flex items-center justify-between">
+                        <span>Pick a Target Number:</span>
+                        <span class="text-xs text-indigo-600 font-semibold">(Type 1 to 100)</span>
+                    </label>
+
+                    <div class="flex items-center gap-3">
+                        <input type="number" id="explorer-num-input" value="12" min="1" max="100" class="w-24 h-12 text-center text-2xl font-black bg-indigo-50 border-2 border-indigo-400 rounded-2xl focus:outline-none text-indigo-900 shadow-inner">
+                        <button onclick="updateExplorerFromInput()" class="bouncy-btn flex-grow bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-extrabold py-3 px-4 rounded-2xl shadow-md text-sm flex items-center justify-center gap-1.5">
+                            <span>✨</span> Visualize Number!
+                        </button>
+                    </div>
+
+                    <!-- Quick Preset Buttons -->
+                    <div class="flex items-center gap-1.5 pt-1 overflow-x-auto pb-1">
+                        <span class="text-[11px] font-bold text-gray-400 uppercase">Try:</span>
+                        <button onclick="setExplorerNum(6)" class="bouncy-btn bg-gray-100 hover:bg-indigo-100 text-gray-700 px-2.5 py-1 rounded-xl text-xs font-bold border border-gray-200">6</button>
+                        <button onclick="setExplorerNum(12)" class="bouncy-btn bg-gray-100 hover:bg-indigo-100 text-gray-700 px-2.5 py-1 rounded-xl text-xs font-bold border border-gray-200">12</button>
+                        <button onclick="setExplorerNum(18)" class="bouncy-btn bg-gray-100 hover:bg-indigo-100 text-gray-700 px-2.5 py-1 rounded-xl text-xs font-bold border border-gray-200">18</button>
+                        <button onclick="setExplorerNum(24)" class="bouncy-btn bg-gray-100 hover:bg-indigo-100 text-gray-700 px-2.5 py-1 rounded-xl text-xs font-bold border border-gray-200">24</button>
+                        <button onclick="setExplorerNum(36)" class="bouncy-btn bg-gray-100 hover:bg-indigo-100 text-gray-700 px-2.5 py-1 rounded-xl text-xs font-bold border border-gray-200">36</button>
+                    </div>
+                </div>
+
+                <!-- Factor Pairs Display -->
+                <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-xl border-4 border-white flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-extrabold text-emerald-800 flex items-center gap-1.5">
+                            <span>🧩</span> Factor Pairs of <span id="factors-target-lbl" class="text-emerald-600 font-black">12</span>
+                        </h3>
+                        <span id="factors-count-badge" class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full font-bold">6 factors total</span>
+                    </div>
+
+                    <!-- List of Factor Pairs -->
+                    <div id="factor-pairs-list" class="flex flex-col gap-2 max-h-[180px] overflow-y-auto pr-1">
+                        <!-- Dynamically populated factor pair buttons -->
+                    </div>
+
+                    <!-- Array Dot Visualizer -->
+                    <div class="bg-emerald-50/70 border border-emerald-200 p-3 rounded-2xl flex flex-col items-center">
+                        <span class="text-[11px] font-bold text-emerald-800 mb-1" id="array-label">Click a factor pair above to see array grid!</span>
+                        <div id="array-grid-container" class="flex flex-col gap-1 items-center justify-center p-2 min-h-[100px] w-full overflow-x-auto">
+                            <!-- Array dots rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Controls: 100-Number Grid Multiples Visualizer -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-xl border-4 border-white flex flex-col gap-3">
+                    
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                        <div>
+                            <h3 class="text-base font-extrabold text-indigo-900 flex items-center gap-2">
+                                <span>🚀</span> Interactive 1-100 Multiples & Factors Grid
+                            </h3>
+                            <p class="text-xs text-gray-500 font-semibold">Glowing Amber = Multiples | Glowing Green = Factors</p>
+                        </div>
+
+                        <!-- Skip count player controls -->
+                        <div class="flex items-center gap-2">
+                            <button onclick="playSkipCountAnimation()" class="bouncy-btn bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow flex items-center gap-1">
+                                <span>▶</span> Skip-Count Hop
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 1-100 Number Grid -->
+                    <div id="grid-100" class="grid grid-cols-10 gap-1 sm:gap-1.5 p-2 bg-gray-50 rounded-2xl border-2 border-gray-200">
+                        <!-- Generated tiles 1 to 100 via JS -->
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs font-bold text-gray-500 px-1 pt-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span> Factors
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-amber-500 inline-block"></span> Multiples
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-indigo-600 inline-block"></span> Target Number
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+        <!-- MODULE 2: "Factor Pop!" Arcade Game -->
+        <section id="module-balloon" class="hidden flex-col gap-4">
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-xl border-4 border-white flex flex-col gap-4">
+                
+                <!-- Game Status Header -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white p-4 rounded-2xl shadow-md">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-pink-200">Arcade Game</span>
+                        <h2 class="text-xl font-extrabold flex items-center gap-2">
+                            <span>🎈</span> Factor Pop!
+                        </h2>
+                    </div>
+
+                    <div class="flex items-center gap-4 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm border border-white/20">
+                        <div class="text-center">
+                            <div class="text-[10px] text-pink-200 uppercase font-bold">Target Number</div>
+                            <div id="balloon-target" class="text-2xl font-black text-amber-300">12</div>
+                        </div>
+                        <div class="h-8 w-0.5 bg-white/20"></div>
+                        <div class="text-center">
+                            <div class="text-[10px] text-pink-200 uppercase font-bold">Score</div>
+                            <div id="balloon-score" class="text-2xl font-black text-white">0</div>
+                        </div>
+                        <div class="h-8 w-0.5 bg-white/20"></div>
+                        <div class="text-center">
+                            <div class="text-[10px] text-pink-200 uppercase font-bold">Streak</div>
+                            <div id="balloon-streak" class="text-2xl font-black text-amber-300">🔥 0</div>
+                        </div>
+                    </div>
+
+                    <button onclick="startBalloonGame()" class="bouncy-btn bg-amber-400 hover:bg-amber-300 text-amber-950 font-black px-4 py-2.5 rounded-xl shadow text-sm">
+                        <span>🔄</span> Restart Game
+                    </button>
+                </div>
+
+                <!-- Balloon Sky Stage Container -->
+                <div id="balloon-stage" class="relative w-full h-[400px] bg-gradient-to-b from-sky-300 via-sky-200 to-indigo-100 rounded-2xl border-4 border-sky-300 overflow-hidden shadow-inner flex items-center justify-center">
+                    
+                    <div id="balloon-start-prompt" class="text-center bg-white/90 p-6 rounded-3xl shadow-xl border-2 border-indigo-200 max-w-md z-20">
+                        <div class="text-4xl mb-2">🎈</div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-1">Ready to Pop Factors?</h3>
+                        <p class="text-xs text-gray-600 mb-4">Pop ONLY the balloons that are <strong>FACTORS</strong> of the target number! Avoid non-factors!</p>
+                        <button onclick="startBalloonGame()" class="bouncy-btn bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black px-6 py-3 rounded-2xl text-base shadow-lg">
+                            Start Popping! 🚀
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- MODULE 3: "Multiple Leap Frog" Game -->
+        <section id="module-frog" class="hidden flex-col gap-4">
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-xl border-4 border-white flex flex-col gap-4">
+                
+                <!-- Frog Game Header -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-4 rounded-2xl shadow-md">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-200">Lily Pad Hop</span>
+                        <h2 class="text-xl font-extrabold flex items-center gap-2">
+                            <span>🐸</span> Multiple Leap Frog!
+                        </h2>
+                    </div>
+
+                    <div class="flex items-center gap-4 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm border border-white/20">
+                        <div class="text-center">
+                            <div class="text-[10px] text-emerald-200 uppercase font-bold">Hop Rule</div>
+                            <div id="frog-target-rule" class="text-xl font-black text-amber-300">Multiples of 5</div>
+                        </div>
+                        <div class="h-8 w-0.5 bg-white/20"></div>
+                        <div class="text-center">
+                            <div class="text-[10px] text-emerald-200 uppercase font-bold">Stars</div>
+                            <div id="frog-score" class="text-2xl font-black text-white">0 ⭐</div>
+                        </div>
+                    </div>
+
+                    <button onclick="startFrogGame()" class="bouncy-btn bg-amber-400 hover:bg-amber-300 text-amber-950 font-black px-4 py-2.5 rounded-xl shadow text-sm">
+                        <span>🔄</span> New Pond
+                    </button>
+                </div>
+
+                <!-- Pond Stage -->
+                <div id="frog-pond-stage" class="relative w-full min-h-[380px] bg-gradient-to-b from-teal-400 to-blue-600 rounded-2xl border-4 border-teal-300 overflow-hidden shadow-inner p-6 flex flex-col justify-between items-center">
+                    
+                    <div class="w-full text-center bg-white/20 backdrop-blur-md py-2 px-4 rounded-xl text-white text-xs font-bold border border-white/30">
+                        Click the correct lily pads in increasing order that are MULTIPLES of <span id="frog-rule-num" class="text-amber-300 font-black text-base">5</span>!
+                    </div>
+
+                    <!-- Lily Pads Container -->
+                    <div id="lily-pads-container" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 my-6 w-full max-w-3xl">
+                        <!-- Lily pad items rendered by JS -->
+                    </div>
+
+                    <!-- Frog Mascot Banner -->
+                    <div id="frog-character-pad" class="flex items-center gap-3 bg-white/90 px-5 py-2.5 rounded-2xl shadow-lg border-2 border-emerald-400">
+                        <div id="frog-sprite" class="text-3xl">🐸</div>
+                        <div class="text-xs font-bold text-emerald-900" id="frog-status-text">
+                            Ribbit! I am ready to leap on multiples!
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- MODULE 4: Mystery Box / GCF & LCM Quiz -->
+        <section id="module-quiz" class="hidden flex-col gap-4 max-w-3xl mx-auto w-full">
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 shadow-xl border-4 border-white flex flex-col gap-5">
+                
+                <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-3xl">🎁</span>
+                        <div>
+                            <h2 class="text-xl font-extrabold text-indigo-900">Mystery Question Challenge</h2>
+                            <p class="text-xs text-gray-500 font-bold">Test your knowledge on Factors, Multiples, GCF & LCM!</p>
+                        </div>
+                    </div>
+                    <div class="bg-indigo-100 text-indigo-800 text-sm font-extrabold px-3 py-1.5 rounded-xl shadow-sm" id="quiz-score-badge">
+                        Score: 0
+                    </div>
+                </div>
+
+                <!-- Question Box -->
+                <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 p-6 rounded-3xl text-center flex flex-col items-center justify-center gap-3">
+                    <span class="bg-indigo-600 text-white text-[11px] uppercase font-bold px-3 py-1 rounded-full" id="quiz-category-tag">Factor or Multiple?</span>
+                    <p id="quiz-question-text" class="text-lg sm:text-2xl font-black text-gray-800">
+                        Is 6 a FACTOR or a MULTIPLE of 18?
+                    </p>
+                    <div id="quiz-hint-box" class="text-xs font-semibold text-indigo-600 bg-white px-3 py-1.5 rounded-xl border border-indigo-100">
+                        💡 Hint: Does 6 multiply inside 18 evenly?
+                    </div>
+                </div>
+
+                <!-- Answer Options -->
+                <div id="quiz-options-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Dynamic option buttons -->
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-6xl mx-auto w-full text-center py-4 text-xs text-gray-600 font-bold">
+        Factor & Multiple Kingdom • Interactive Math Playground for Kids
+    </footer>
+
+    <script>
+        // --- Game Global State ---
+        let state = {
+            soundEnabled: true,
+            currentTab: 'explorer',
+            targetNum: 12,
+            
+            // Balloon game state
+            balloonScore: 0,
+            balloonStreak: 0,
+            balloonTimer: null,
+            
+            // Frog game state
+            frogScore: 0,
+            frogRule: 5,
+            frogCurrentMultipleIndex: 1,
+            
+            // Quiz state
+            quizScore: 0,
+            currentQuizIndex: 0
+        };
+
+        // --- Web Audio API Sound Synthesizer ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (!state.soundEnabled) return;
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'pop') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(250, now);
+                osc.frequency.linearRampToValueAtTime(120, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'jump') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'win') {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const noteOsc = audioCtx.createOscillator();
+                    const noteGain = audioCtx.createGain();
+                    noteOsc.connect(noteGain);
+                    noteGain.connect(audioCtx.destination);
+                    noteOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    noteGain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
+                    noteOsc.start(now + idx * 0.08);
+                    noteOsc.stop(now + idx * 0.08 + 0.2);
+                });
+            }
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            document.getElementById('sound-icon').innerText = state.soundEnabled ? '🔊' : '🔇';
+            document.getElementById('sound-btn').classList.toggle('bg-gray-200', !state.soundEnabled);
+        }
+
+        // --- Mascot Speech Audio ---
+        function speakMascotText() {
+            const speechText = document.getElementById('mascot-speech').innerText;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(speechText);
+                utterance.pitch = 1.3;
+                utterance.rate = 0.95;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function setMascotText(text) {
+            document.getElementById('mascot-speech').innerText = text;
+        }
+
+        function toggleConceptGuide() {
+            playSound('click');
+            const guide = document.getElementById('concept-guide');
+            guide.classList.toggle('hidden');
+        }
+
+        // --- Navigation Switcher ---
+        function switchTab(tabName) {
+            playSound('click');
+            state.currentTab = tabName;
+
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            document.getElementById('module-explorer').classList.toggle('hidden', tabName !== 'explorer');
+            document.getElementById('module-balloon').classList.toggle('hidden', tabName !== 'balloon');
+            document.getElementById('module-frog').classList.toggle('hidden', tabName !== 'frog');
+            document.getElementById('module-quiz').classList.toggle('hidden', tabName !== 'quiz');
+
+            // Module init
+            if (tabName === 'explorer') {
+                setMascotText(`Exploring ${state.targetNum}! Green tiles are Factors (divide evenly). Amber tiles are Multiples (skip counting)!`);
+                updateExplorerVisuals();
+            } else if (tabName === 'balloon') {
+                setMascotText("Welcome to Factor Pop! Pop ONLY the balloons that fit inside the target number!");
+                startBalloonGame();
+            } else if (tabName === 'frog') {
+                setMascotText("Help the frog leap across the lily pads! Click the multiples in order!");
+                startFrogGame();
+            } else if (tabName === 'quiz') {
+                setMascotText("Mystery Quiz Time! Read carefully and choose the right answer!");
+                loadQuizQuestion();
+            }
+        }
+
+        // --- MODULE 1: EXPLORER LOGIC ---
+        function generate100Grid() {
+            const gridContainer = document.getElementById('grid-100');
+            gridContainer.innerHTML = '';
+
+            for (let i = 1; i <= 100; i++) {
+                const tile = document.createElement('button');
+                tile.id = `tile-${i}`;
+                tile.className = `grid-tile h-7 sm:h-9 rounded-lg font-bold text-xs sm:text-sm border flex items-center justify-center bg-white border-gray-200 text-gray-700`;
+                tile.innerText = i;
+                tile.onclick = () => setExplorerNum(i);
+                gridContainer.appendChild(tile);
+            }
+        }
+
+        function setExplorerNum(n) {
+            playSound('click');
+            state.targetNum = n;
+            document.getElementById('explorer-num-input').value = n;
+            updateExplorerVisuals();
+        }
+
+        function updateExplorerFromInput() {
+            playSound('click');
+            let val = parseInt(document.getElementById('explorer-num-input').value) || 12;
+            val = Math.max(1, Math.min(100, val));
+            document.getElementById('explorer-num-input').value = val;
+            state.targetNum = val;
+            updateExplorerVisuals();
+        }
+
+        function updateExplorerVisuals() {
+            const num = state.targetNum;
+
+            document.getElementById('factors-target-lbl').innerText = num;
+
+            // Find all factors
+            const factors = [];
+            const pairs = [];
+            for (let i = 1; i <= Math.sqrt(num); i++) {
+                if (num % i === 0) {
+                    factors.push(i);
+                    if (i !== num / i) factors.push(num / i);
+                    pairs.push([i, num / i]);
+                }
+            }
+            factors.sort((a, b) => a - b);
+
+            document.getElementById('factors-count-badge').innerText = `${factors.length} factors total`;
+
+            // Render Factor Pairs Buttons
+            const pairsContainer = document.getElementById('factor-pairs-list');
+            pairsContainer.innerHTML = '';
+            pairs.forEach((pair, idx) => {
+                const pairBtn = document.createElement('button');
+                pairBtn.className = `bouncy-btn w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 rounded-xl p-2 font-bold text-xs flex items-center justify-between`;
+                pairBtn.innerHTML = `
+                    <span>Pair ${idx + 1}: <strong>${pair[0]} × ${pair[1]} = ${num}</strong></span>
+                    <span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full">See Array ➔</span>
+                `;
+                pairBtn.onclick = () => renderArrayGrid(pair[0], pair[1]);
+                pairsContainer.appendChild(pairBtn);
+            });
+
+            // Render first pair array as default
+            if (pairs.length > 0) {
+                renderArrayGrid(pairs[0][0], pairs[0][1]);
+            }
+
+            // Update 100 Grid Highlights
+            for (let i = 1; i <= 100; i++) {
+                const tile = document.getElementById(`tile-${i}`);
+                if (!tile) continue;
+
+                tile.classList.remove('factor-active', 'multiple-active', 'bg-indigo-600', 'text-white', 'scale-110');
+                tile.className = `grid-tile h-7 sm:h-9 rounded-lg font-bold text-xs sm:text-sm border flex items-center justify-center bg-white border-gray-200 text-gray-700`;
+
+                // Highlight Factors
+                if (factors.includes(i)) {
+                    tile.classList.add('factor-active');
+                }
+
+                // Highlight Multiples
+                if (i % num === 0) {
+                    tile.classList.add('multiple-active');
+                }
+
+                // Exact target
+                if (i === num) {
+                    tile.style.backgroundColor = '#4F46E5';
+                    tile.style.color = '#FFFFFF';
+                    tile.style.borderColor = '#312E81';
+                }
+            }
+
+            setMascotText(`Target ${num}: Green tiles fit inside ${num}. Amber tiles are skip-counting multiples!`);
+        }
+
+        function renderArrayGrid(r, c) {
+            playSound('click');
+            document.getElementById('array-label').innerText = `Array Grid: ${r} row(s) of ${c} dots (${r} × ${c} = ${state.targetNum})`;
+            const container = document.getElementById('array-grid-container');
+            container.innerHTML = '';
+
+            // Cap visible dots for ultra-large numbers to avoid overflow
+            const displayR = Math.min(r, 12);
+            const displayC = Math.min(c, 20);
+
+            for (let row = 0; row < displayR; row++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex gap-1.5';
+                for (let col = 0; col < displayC; col++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'w-4 h-4 rounded-full bg-emerald-500 border border-emerald-700 shadow-sm animate-pulse';
+                    rowDiv.appendChild(dot);
+                }
+                container.appendChild(rowDiv);
+            }
+        }
+
+        function playSkipCountAnimation() {
+            playSound('jump');
+            const num = state.targetNum;
+            let currentMultiple = num;
+
+            const interval = setInterval(() => {
+                if (currentMultiple > 100) {
+                    clearInterval(interval);
+                    return;
+                }
+                const tile = document.getElementById(`tile-${currentMultiple}`);
+                if (tile) {
+                    tile.style.transform = 'scale(1.4)';
+                    setTimeout(() => {
+                        tile.style.transform = '';
+                    }, 300);
+                }
+                currentMultiple += num;
+            }, 400);
+        }
+
+        // --- MODULE 2: BALLOON POP LOGIC ---
+        function startBalloonGame() {
+            state.balloonScore = 0;
+            state.balloonStreak = 0;
+            state.targetNum = [6, 8, 12, 15, 18, 20, 24][Math.floor(Math.random() * 7)];
+
+            document.getElementById('balloon-target').innerText = state.targetNum;
+            document.getElementById('balloon-score').innerText = '0';
+            document.getElementById('balloon-streak').innerText = '🔥 0';
+
+            const stage = document.getElementById('balloon-stage');
+            stage.innerHTML = '';
+
+            if (state.balloonTimer) clearInterval(state.balloonTimer);
+
+            // Spawn balloon loop
+            state.balloonTimer = setInterval(() => {
+                spawnBalloon();
+            }, 1400);
+
+            setMascotText(`Target is ${state.targetNum}! Pop only numbers that divide ${state.targetNum} evenly!`);
+        }
+
+        function spawnBalloon() {
+            const stage = document.getElementById('balloon-stage');
+            if (!stage || state.currentTab !== 'balloon') return;
+
+            const target = state.targetNum;
+            // Get factors
+            const factors = [];
+            for (let i = 1; i <= target; i++) {
+                if (target % i === 0) factors.push(i);
+            }
+
+            // Decide whether factor or random distractor
+            const isFactor = Math.random() < 0.55;
+            let val;
+            if (isFactor) {
+                val = factors[Math.floor(Math.random() * factors.length)];
+            } else {
+                val = Math.floor(Math.random() * 25) + 1;
+                if (factors.includes(val)) val += 1; // force non-factor
+            }
+
+            const balloon = document.createElement('div');
+            const bgColors = ['bg-pink-500', 'bg-purple-500', 'bg-indigo-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500'];
+            const randomColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+
+            const leftPos = Math.floor(Math.random() * 80) + 5; // 5% to 85%
+            const duration = Math.floor(Math.random() * 3) + 4; // 4s to 7s
+
+            balloon.className = `balloon w-16 h-20 sm:w-20 sm:h-24 ${randomColor} rounded-full flex flex-col items-center justify-center text-white font-black text-xl shadow-lg border-2 border-white/40`;
+            balloon.style.left = `${leftPos}%`;
+            balloon.style.animationDuration = `${duration}s`;
+
+            balloon.innerHTML = `
+                <span>${val}</span>
+                <div class="w-1 h-4 bg-gray-300 absolute -bottom-3"></div>
+            `;
+
+            balloon.onclick = () => handleBalloonClick(balloon, val, isFactor);
+
+            stage.appendChild(balloon);
+
+            // Cleanup when balloon floats away
+            setTimeout(() => {
+                if (stage.contains(balloon)) {
+                    stage.removeChild(balloon);
+                }
+            }, duration * 1000);
+        }
+
+        function handleBalloonClick(element, val, isFactor) {
+            const target = state.targetNum;
+            const actualFactor = (target % val === 0);
+
+            if (actualFactor) {
+                playSound('pop');
+                confetti({ particleCount: 20, spread: 40, origin: { y: 0.6 } });
+                state.balloonScore += 10;
+                state.balloonStreak += 1;
+
+                element.style.transform = 'scale(1.5)';
+                element.style.opacity = '0';
+                setTimeout(() => element.remove(), 150);
+
+            } else {
+                playSound('wrong');
+                state.balloonStreak = 0;
+                element.classList.add('bg-gray-800');
+                element.innerHTML = '❌';
+                setTimeout(() => element.remove(), 200);
+            }
+
+            document.getElementById('balloon-score').innerText = state.balloonScore;
+            document.getElementById('balloon-streak').innerText = `🔥 ${state.balloonStreak}`;
+        }
+
+        // --- MODULE 3: FROG LEAP LOGIC ---
+        function startFrogGame() {
+            const possibleRules = [2, 3, 4, 5, 6, 8, 10];
+            state.frogRule = possibleRules[Math.floor(Math.random() * possibleRules.length)];
+            state.frogCurrentMultipleIndex = 1;
+
+            document.getElementById('frog-target-rule').innerText = `Multiples of ${state.frogRule}`;
+            document.getElementById('frog-rule-num').innerText = state.frogRule;
+
+            const container = document.getElementById('lily-pads-container');
+            container.innerHTML = '';
+
+            // Generate correct sequence + distractors
+            const correctMultiples = [1, 2, 3, 4, 5].map(i => i * state.frogRule);
+            const distractors = [1, 2, 3, 4, 5].map(i => i * state.frogRule + 1);
+
+            const allPads = [...correctMultiples, ...distractors].sort(() => Math.random() - 0.5);
+
+            allPads.forEach(val => {
+                const pad = document.createElement('button');
+                pad.className = `bouncy-btn bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-full h-20 w-20 sm:h-24 sm:w-24 mx-auto flex flex-col items-center justify-center border-4 border-emerald-300 shadow-xl relative`;
+                pad.innerHTML = `
+                    <span class="text-xl sm:text-2xl">${val}</span>
+                    <span class="text-[9px] text-emerald-200">Lily Pad</span>
+                `;
+                pad.onclick = () => handleLilyPadClick(pad, val);
+                container.appendChild(pad);
+            });
+
+            document.getElementById('frog-status-text').innerText = `Click ${state.frogRule} to start hopping!`;
+        }
+
+        function handleLilyPadClick(padElement, val) {
+            const expectedVal = state.frogRule * state.frogCurrentMultipleIndex;
+
+            if (val === expectedVal) {
+                playSound('jump');
+                padElement.classList.remove('bg-emerald-600');
+                padElement.classList.add('bg-amber-400', 'border-amber-200', 'text-amber-950');
+                padElement.innerHTML += `<span class="absolute top-1 right-1 text-xs">⭐</span>`;
+
+                const frogSprite = document.getElementById('frog-sprite');
+                frogSprite.classList.add('frog-jumping');
+                setTimeout(() => frogSprite.classList.remove('frog-jumping'), 500);
+
+                state.frogCurrentMultipleIndex += 1;
+                state.frogScore += 10;
+                document.getElementById('frog-score').innerText = `${state.frogScore} ⭐`;
+
+                if (state.frogCurrentMultipleIndex > 5) {
+                    playSound('win');
+                    confetti({ particleCount: 70, spread: 60 });
+                    document.getElementById('frog-status-text').innerText = "HOORAY! You completed all multiples!";
+                } else {
+                    const nextVal = state.frogRule * state.frogCurrentMultipleIndex;
+                    document.getElementById('frog-status-text').innerText = `Great hop! Next find ${nextVal}!`;
+                }
+
+            } else {
+                playSound('wrong');
+                padElement.classList.add('bg-rose-600');
+                setTimeout(() => padElement.classList.remove('bg-rose-600'), 400);
+                document.getElementById('frog-status-text').innerText = `Oops! ${val} is not the next multiple (${expectedVal}). Try again!`;
+            }
+        }
+
+        // --- MODULE 4: MYSTERY QUIZ DATA & LOGIC ---
+        const quizBank = [
+            {
+                q: "Is 6 a FACTOR or a MULTIPLE of 18?",
+                cat: "Factor or Multiple?",
+                hint: "Does 6 fit inside 18 with no leftovers?",
+                options: ["FACTOR (6 × 3 = 18)", "MULTIPLE (18 × 6)"],
+                correct: 0
+            },
+            {
+                q: "Which number is a MULTIPLE of 5?",
+                cat: "Multiples Challenge",
+                hint: "Multiples of 5 always end in 0 or 5!",
+                options: ["12", "25", "18", "33"],
+                correct: 1
+            },
+            {
+                q: "What is the Greatest Common Factor (GCF) of 12 and 18?",
+                cat: "GCF Discovery",
+                hint: "Find the largest number that divides both 12 and 18!",
+                options: ["2", "3", "6", "12"],
+                correct: 2
+            },
+            {
+                q: "Is 24 a MULTIPLE of 8?",
+                cat: "True or False",
+                hint: "Count by 8s: 8, 16, 24...",
+                options: ["YES! (8 × 3 = 24)", "NO!"],
+                correct: 0
+            },
+            {
+                q: "Which of these is a PRIME FACTOR of 10?",
+                cat: "Factors Challenge",
+                hint: "Prime numbers have only 1 and themselves as factors!",
+                options: ["4", "5", "6", "8"],
+                correct: 1
+            }
+        ];
+
+        function loadQuizQuestion() {
+            const currentQ = quizBank[state.currentQuizIndex];
+            document.getElementById('quiz-category-tag').innerText = currentQ.cat;
+            document.getElementById('quiz-question-text').innerText = currentQ.q;
+            document.getElementById('quiz-hint-box').innerText = `💡 ${currentQ.hint}`;
+
+            const optionsGrid = document.getElementById('quiz-options-grid');
+            optionsGrid.innerHTML = '';
+
+            currentQ.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `bouncy-btn bg-white hover:bg-indigo-50 text-indigo-950 font-extrabold p-4 rounded-2xl border-2 border-indigo-200 shadow-md text-left text-sm sm:text-base flex items-center justify-between`;
+                btn.innerHTML = `
+                    <span>${optText}</span>
+                    <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">➔</span>
+                `;
+                btn.onclick = () => answerQuiz(idx);
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function answerQuiz(selectedIdx) {
+            const currentQ = quizBank[state.currentQuizIndex];
+
+            if (selectedIdx === currentQ.correct) {
+                playSound('win');
+                confetti({ particleCount: 50, spread: 50 });
+                state.quizScore += 10;
+                document.getElementById('quiz-score-badge').innerText = `Score: ${state.quizScore}`;
+
+                state.currentQuizIndex = (state.currentQuizIndex + 1) % quizBank.length;
+                setTimeout(() => loadQuizQuestion(), 1200);
+            } else {
+                playSound('wrong');
+                setMascotText("Not quite! Try reading the hint and attempt again!");
+            }
+        }
+
+        // --- App Initialization ---
+        window.onload = function() {
+            generate100Grid();
+            updateExplorerVisuals();
+        };
+    </script>
+</body>
+</html>

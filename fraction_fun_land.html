@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraction Fun Land! 🍕 Visual Fraction Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Fredoka', 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%);
+            min-height: 100vh;
+        }
+
+        .bouncy-btn {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .bouncy-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        .bouncy-btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .shape-sector {
+            transition: fill 0.25s ease, transform 0.2s ease, stroke 0.2s ease;
+            cursor: pointer;
+        }
+        .shape-sector:hover {
+            filter: brightness(1.15);
+            stroke-width: 3.5px;
+        }
+
+        .fraction-line {
+            border-top: 4px solid #2D3748;
+            border-radius: 4px;
+        }
+
+        .tab-btn.active {
+            background-color: #4F46E5;
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #818CF8;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 text-gray-800 flex flex-col justify-between min-h-screen selection:bg-pink-300">
+
+    <!-- Header -->
+    <header class="max-w-5xl mx-auto w-full text-center mb-4">
+        <div class="bg-white/80 backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-white flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-yellow-400 p-3 rounded-2xl shadow-inner text-3xl animate-bounce">
+                    🍕
+                </div>
+                <div class="text-left">
+                    <h1 class="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                        Fraction Fun Land!
+                    </h1>
+                    <p class="text-xs sm:text-sm text-gray-500 font-semibold">Learn, Divide & Color Fractions interactively!</p>
+                </div>
+            </div>
+
+            <!-- Mode Switcher -->
+            <div class="flex bg-gray-100 p-1.5 rounded-2xl border-2 border-gray-200">
+                <button id="tab-explore" onclick="switchMode('explore')" class="tab-btn active px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
+                    <span>🎨</span> Free Explore
+                </button>
+                <button id="tab-quiz" onclick="switchMode('quiz')" class="tab-btn px-4 py-2 rounded-xl font-bold text-sm text-gray-600 transition-all flex items-center gap-2">
+                    <span>⭐</span> Challenge Mode
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-5xl mx-auto w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Left Panel: Controls & Inputs -->
+        <section class="lg:col-span-5 flex flex-col gap-5">
+            
+            <!-- Shape Selection Card -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-xl border-4 border-white">
+                <h2 class="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
+                    <span>1.</span> Pick a Shape
+                </h2>
+                <div class="grid grid-cols-5 gap-2" id="shape-selector">
+                    <button onclick="selectShape('circle')" id="shape-btn-circle" class="shape-btn bouncy-btn bg-pink-100 border-2 border-pink-400 p-2 sm:p-3 rounded-2xl flex flex-col items-center justify-center gap-1 hover:bg-pink-200 focus:outline-none">
+                        <svg class="w-8 h-8 text-pink-600" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                        <span class="text-xs font-bold text-pink-700">Circle</span>
+                    </button>
+
+                    <button onclick="selectShape('square')" id="shape-btn-square" class="shape-btn bouncy-btn bg-purple-100 border-2 border-purple-200 p-2 sm:p-3 rounded-2xl flex flex-col items-center justify-center gap-1 hover:bg-purple-200 focus:outline-none">
+                        <svg class="w-8 h-8 text-purple-600" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                        <span class="text-xs font-bold text-purple-700">Square</span>
+                    </button>
+
+                    <button onclick="selectShape('rectangle')" id="shape-btn-rectangle" class="shape-btn bouncy-btn bg-blue-100 border-2 border-blue-200 p-2 sm:p-3 rounded-2xl flex flex-col items-center justify-center gap-1 hover:bg-blue-200 focus:outline-none">
+                        <svg class="w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
+                        <span class="text-xs font-bold text-blue-700">Bar</span>
+                    </button>
+
+                    <button onclick="selectShape('hexagon')" id="shape-btn-hexagon" class="shape-btn bouncy-btn bg-emerald-100 border-2 border-emerald-200 p-2 sm:p-3 rounded-2xl flex flex-col items-center justify-center gap-1 hover:bg-emerald-200 focus:outline-none">
+                        <svg class="w-8 h-8 text-emerald-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l9 4.9v10.2l-9 4.9-9-4.9V6.9z"/></svg>
+                        <span class="text-xs font-bold text-emerald-700">Hexagon</span>
+                    </button>
+
+                    <button onclick="selectShape('star')" id="shape-btn-star" class="shape-btn bouncy-btn bg-amber-100 border-2 border-amber-200 p-2 sm:p-3 rounded-2xl flex flex-col items-center justify-center gap-1 hover:bg-amber-200 focus:outline-none">
+                        <svg class="w-8 h-8 text-amber-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <span class="text-xs font-bold text-amber-700">Star</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Numerator & Denominator Inputs Card -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-xl border-4 border-white flex flex-col gap-4">
+                <h2 class="text-lg font-bold text-indigo-900 flex items-center justify-between">
+                    <span>2.</span> Enter Fraction Numbers
+                    <span class="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">Max parts: 24</span>
+                </h2>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Numerator Box -->
+                    <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 flex flex-col items-center">
+                        <label class="text-xs font-bold text-amber-800 uppercase tracking-wide mb-1">Top (Numerator)</label>
+                        <div class="text-[10px] text-amber-600 mb-2">Parts to Color 🎨</div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="adjustValue('numerator', -1)" class="w-8 h-8 rounded-xl bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold text-lg bouncy-btn">-</button>
+                            <input type="number" id="input-numerator" value="4" min="0" max="24" class="w-16 h-10 text-center font-bold text-2xl bg-white border-2 border-amber-400 rounded-xl focus:outline-none text-amber-900 shadow-inner">
+                            <button onclick="adjustValue('numerator', 1)" class="w-8 h-8 rounded-xl bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold text-lg bouncy-btn">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Denominator Box -->
+                    <div class="bg-indigo-50 border-2 border-indigo-300 rounded-2xl p-3 flex flex-col items-center">
+                        <label class="text-xs font-bold text-indigo-800 uppercase tracking-wide mb-1">Bottom (Denominator)</label>
+                        <div class="text-[10px] text-indigo-600 mb-2">Total Equal Parts ✂️</div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="adjustValue('denominator', -1)" class="w-8 h-8 rounded-xl bg-indigo-200 hover:bg-indigo-300 text-indigo-900 font-bold text-lg bouncy-btn">-</button>
+                            <input type="number" id="input-denominator" value="8" min="1" max="24" class="w-16 h-10 text-center font-bold text-2xl bg-white border-2 border-indigo-400 rounded-xl focus:outline-none text-indigo-900 shadow-inner">
+                            <button onclick="adjustValue('denominator', 1)" class="w-8 h-8 rounded-xl bg-indigo-200 hover:bg-indigo-300 text-indigo-900 font-bold text-lg bouncy-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color Selector for Shading -->
+                <div class="flex items-center justify-between pt-1">
+                    <span class="text-xs font-bold text-gray-600">Pick Color:</span>
+                    <div class="flex gap-2" id="color-palette">
+                        <button onclick="setSliceColor('#EC4899')" class="w-7 h-7 rounded-full bg-pink-500 ring-2 ring-offset-1 ring-pink-500 bouncy-btn color-option" data-color="#EC4899"></button>
+                        <button onclick="setSliceColor('#3B82F6')" class="w-7 h-7 rounded-full bg-blue-500 bouncy-btn color-option" data-color="#3B82F6"></button>
+                        <button onclick="setSliceColor('#10B981')" class="w-7 h-7 rounded-full bg-emerald-500 bouncy-btn color-option" data-color="#10B981"></button>
+                        <button onclick="setSliceColor('#F59E0B')" class="w-7 h-7 rounded-full bg-amber-500 bouncy-btn color-option" data-color="#F59E0B"></button>
+                        <button onclick="setSliceColor('#8B5CF6')" class="w-7 h-7 rounded-full bg-purple-500 bouncy-btn color-option" data-color="#8B5CF6"></button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="applyFractionFromInput()" class="bouncy-btn bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-3 px-4 rounded-2xl shadow-lg flex items-center justify-center gap-2">
+                        <span>✨</span> Create Shape
+                    </button>
+                    <button onclick="resetAll()" class="bouncy-btn bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-2xl border-2 border-gray-300 flex items-center justify-center gap-2">
+                        <span>🔄</span> Reset All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Challenge Prompt Card (Hidden in Explore Mode) -->
+            <div id="quiz-card" class="hidden bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-3xl p-5 shadow-xl border-4 border-white flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <span class="bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Challenge Target</span>
+                    <span id="quiz-score" class="font-bold text-sm bg-white text-orange-600 px-3 py-1 rounded-full shadow">Score: 0</span>
+                </div>
+                <div class="text-center py-2">
+                    <p class="text-xs font-medium text-amber-100">Can you build this fraction?</p>
+                    <div id="quiz-target-text" class="text-3xl font-extrabold my-1">3 / 5</div>
+                    <p id="quiz-target-words" class="text-sm font-semibold text-amber-100">Three fifths</p>
+                </div>
+                <button onclick="checkQuizAnswer()" class="bouncy-btn w-full bg-white text-orange-600 hover:bg-amber-50 font-bold py-2.5 rounded-xl shadow text-center">
+                    Check My Answer! 🎉
+                </button>
+            </div>
+
+        </section>
+
+        <!-- Right Panel: Dynamic Visual Canvas & Fraction Box -->
+        <section class="lg:col-span-7 flex flex-col gap-5">
+            
+            <!-- Main Canvas Viewport -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 shadow-xl border-4 border-white flex flex-col items-center justify-center relative min-h-[380px]">
+                
+                <!-- Helper instruction tooltip -->
+                <div class="absolute top-4 left-4 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+                    <span>💡</span> Click any slice to shade or unshade it!
+                </div>
+
+                <!-- Speech Audio / Read Aloud Button -->
+                <button onclick="speakFraction()" class="absolute top-4 right-4 bg-pink-100 hover:bg-pink-200 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 bouncy-btn border border-pink-300">
+                    <span>🔊</span> Speak
+                </button>
+
+                <!-- SVG Display Container -->
+                <div id="svg-container" class="w-full max-w-[320px] sm:max-w-[360px] h-[320px] sm:h-[360px] flex items-center justify-center my-2">
+                    <!-- SVG gets rendered dynamically via JavaScript -->
+                </div>
+
+                <!-- Interactive Legend/Status -->
+                <div class="text-center text-xs font-semibold text-gray-500 mt-2">
+                    Shaded parts: <span id="shaded-count-badge" class="text-indigo-600 font-bold text-sm">4</span> / <span id="total-count-badge" class="text-indigo-600 font-bold text-sm">8</span>
+                </div>
+            </div>
+
+            <!-- Mathematical Fraction Display Box -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-xl border-4 border-white flex flex-col sm:flex-row items-center justify-between gap-4">
+                
+                <div class="flex items-center gap-6">
+                    <!-- Proper Math Fraction Representation Box -->
+                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl p-4 shadow-lg flex flex-col items-center justify-center min-w-[100px] border-2 border-indigo-200">
+                        <span id="math-numerator" class="text-3xl font-black">4</span>
+                        <div class="fraction-line w-full my-1 border-white/80"></div>
+                        <span id="math-denominator" class="text-3xl font-black">8</span>
+                    </div>
+
+                    <!-- Textual Breakdown & Words -->
+                    <div class="flex flex-col">
+                        <span class="text-xs uppercase tracking-wider font-bold text-indigo-400">Fraction Word Name</span>
+                        <span id="fraction-word-display" class="text-xl sm:text-2xl font-bold text-gray-800">Four Eighths</span>
+                        <p id="fraction-desc-display" class="text-xs text-gray-500 mt-0.5">4 equal parts shaded out of 8 total parts</p>
+                    </div>
+                </div>
+
+                <!-- Fraction Stats / Equivalents -->
+                <div class="flex sm:flex-col gap-2 bg-gray-50 p-3 rounded-2xl border border-gray-200 text-right w-full sm:w-auto justify-around">
+                    <div class="text-xs">
+                        <span class="text-gray-400 font-medium">Decimal:</span>
+                        <span id="decimal-display" class="font-bold text-gray-700 ml-1">0.50</span>
+                    </div>
+                    <div class="text-xs">
+                        <span class="text-gray-400 font-medium">Percentage:</span>
+                        <span id="percent-display" class="font-bold text-gray-700 ml-1">50%</span>
+                    </div>
+                    <div class="text-xs">
+                        <span class="text-gray-400 font-medium">Simplified:</span>
+                        <span id="simplified-display" class="font-bold text-indigo-600 ml-1">1/2</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-5xl mx-auto w-full text-center py-4 text-xs text-gray-600 font-medium">
+        Made with ❤️️ for young mathematicians! Learn fractions visually and interactively.
+    </footer>
+
+    <script>
+        // --- Game State ---
+        let state = {
+            shape: 'circle',          // 'circle', 'square', 'rectangle', 'hexagon', 'star'
+            numerator: 4,
+            denominator: 8,
+            currentColor: '#EC4899',   // Active slice fill color
+            shadedSlices: new Set([0, 1, 2, 3]), // Indices of shaded slices
+            mode: 'explore',           // 'explore' or 'quiz'
+            quizTarget: { num: 3, den: 5 },
+            score: 0
+        };
+
+        // Words for fraction naming
+        const numberWords = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "twenty-one", "twenty-two", "twenty-three", "twenty-four"];
+        
+        const denominatorPlurals = {
+            1: ["whole", "wholes"],
+            2: ["half", "halves"],
+            3: ["third", "thirds"],
+            4: ["fourth", "fourths"],
+            5: ["fifth", "fifths"],
+            6: ["sixth", "sixths"],
+            7: ["seventh", "sevenths"],
+            8: ["eighth", "eighths"],
+            9: ["ninth", "ninths"],
+            10: ["tenth", "tenths"],
+            11: ["eleventh", "elevenths"],
+            12: ["twelfth", "twelfths"],
+            13: ["thirteenth", "thirteenths"],
+            14: ["fourteenth", "fourteenths"],
+            15: ["fifteenth", "fifteenths"],
+            16: ["sixteenth", "sixteenths"],
+            17: ["seventeenth", "seventeenths"],
+            18: ["eighteenth", "eighteenths"],
+            19: ["nineteenth", "nineteenths"],
+            20: ["twentieth", "twentieths"],
+            21: ["twenty-first", "twenty-firsts"],
+            22: ["twenty-second", "twenty-seconds"],
+            23: ["twenty-third", "twenty-thirds"],
+            24: ["twenty-fourth", "twenty-fourths"]
+        };
+
+        // Sound Effects generator using Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'color') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.06); // E5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'reset') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.linearRampToValueAtTime(150, now + 0.15);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'win') {
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C, E, G, C
+                notes.forEach((freq, idx) => {
+                    const noteOsc = audioCtx.createOscillator();
+                    const noteGain = audioCtx.createGain();
+                    noteOsc.connect(noteGain);
+                    noteGain.connect(audioCtx.destination);
+                    noteOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    noteGain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
+                    noteOsc.start(now + idx * 0.08);
+                    noteOsc.stop(now + idx * 0.08 + 0.2);
+                });
+            }
+        }
+
+        // Main initialization
+        window.onload = function() {
+            selectShape('circle', false);
+            updateAllDisplays();
+        };
+
+        function selectShape(shapeName, triggerSound = true) {
+            state.shape = shapeName;
+            if (triggerSound) playSound('click');
+
+            // Update UI buttons styling
+            document.querySelectorAll('.shape-btn').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-indigo-400', 'shadow-lg');
+            });
+            const selectedBtn = document.getElementById(`shape-btn-${shapeName}`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('ring-4', 'ring-indigo-400', 'shadow-lg');
+            }
+
+            renderShape();
+        }
+
+        function setSliceColor(color) {
+            state.currentColor = color;
+            playSound('click');
+            document.querySelectorAll('.color-option').forEach(btn => {
+                if (btn.dataset.color === color) {
+                    btn.classList.add('ring-2', 'ring-offset-1', 'ring-gray-600');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-offset-1', 'ring-gray-600');
+                }
+            });
+            renderShape();
+        }
+
+        function adjustValue(field, delta) {
+            playSound('click');
+            const input = document.getElementById(`input-${field}`);
+            let val = parseInt(input.value) || 0;
+            val = Math.max(field === 'denominator' ? 1 : 0, Math.min(24, val + delta));
+            input.value = val;
+            applyFractionFromInput(false);
+        }
+
+        function applyFractionFromInput(playSoundEffect = true) {
+            let den = parseInt(document.getElementById('input-denominator').value) || 1;
+            let num = parseInt(document.getElementById('input-numerator').value) || 0;
+
+            den = Math.max(1, Math.min(24, den));
+            num = Math.max(0, Math.min(den, num)); // Numerator cannot exceed denominator
+
+            document.getElementById('input-denominator').value = den;
+            document.getElementById('input-numerator').value = num;
+
+            state.denominator = den;
+            state.numerator = num;
+
+            // Re-fill first N slices according to numerator
+            state.shadedSlices.clear();
+            for (let i = 0; i < num; i++) {
+                state.shadedSlices.add(i);
+            }
+
+            if (playSoundEffect) playSound('color');
+
+            renderShape();
+            updateAllDisplays();
+        }
+
+        function toggleSlice(index) {
+            playSound('color');
+            if (state.shadedSlices.has(index)) {
+                state.shadedSlices.delete(index);
+            } else {
+                state.shadedSlices.add(index);
+            }
+            state.numerator = state.shadedSlices.size;
+            document.getElementById('input-numerator').value = state.numerator;
+
+            renderShape();
+            updateAllDisplays();
+        }
+
+        function resetAll() {
+            playSound('reset');
+            state.numerator = 0;
+            state.denominator = 8;
+            document.getElementById('input-numerator').value = 0;
+            document.getElementById('input-denominator').value = 8;
+            state.shadedSlices.clear();
+            selectShape('circle', false);
+            updateAllDisplays();
+        }
+
+        // --- Render SVG Shapes ---
+        function renderShape() {
+            const container = document.getElementById('svg-container');
+            const d = state.denominator;
+            const size = 300;
+            const center = size / 2;
+
+            let svgHtml = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="drop-shadow-md">`;
+
+            if (state.shape === 'circle') {
+                svgHtml += generateCircleSVG(center, center, 130, d);
+            } else if (state.shape === 'square') {
+                svgHtml += generateSquareSVG(size, d);
+            } else if (state.shape === 'rectangle') {
+                svgHtml += generateRectangleSVG(size, d);
+            } else if (state.shape === 'hexagon') {
+                svgHtml += generateHexagonSVG(center, center, 130, d);
+            } else if (state.shape === 'star') {
+                svgHtml += generateStarSVG(center, center, 130, d);
+            }
+
+            svgHtml += `</svg>`;
+            container.innerHTML = svgHtml;
+        }
+
+        // 1. Circle Sector Generator
+        function generateCircleSVG(cx, cy, r, d) {
+            let paths = '';
+            const angleStep = (2 * Math.PI) / d;
+
+            for (let i = 0; i < d; i++) {
+                const startAngle = i * angleStep - Math.PI / 2;
+                const endAngle = (i + 1) * angleStep - Math.PI / 2;
+
+                const x1 = cx + r * Math.cos(startAngle);
+                const y1 = cy + r * Math.sin(startAngle);
+                const x2 = cx + r * Math.cos(endAngle);
+                const y2 = cy + r * Math.sin(endAngle);
+
+                const largeArcFlag = angleStep > Math.PI ? 1 : 0;
+                const isShaded = state.shadedSlices.has(i);
+                const fillColor = isShaded ? state.currentColor : '#F3F4F6';
+
+                let pathData = '';
+                if (d === 1) {
+                    pathData = `M ${cx - r},${cy} a ${r},${r} 0 1,0 ${r * 2},0 a ${r},${r} 0 1,0 -${r * 2},0`;
+                } else {
+                    pathData = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+                }
+
+                paths += `<path d="${pathData}" fill="${fillColor}" stroke="#374151" stroke-width="2.5" stroke-linejoin="round" class="shape-sector" onclick="toggleSlice(${i})"/>`;
+            }
+            return paths;
+        }
+
+        // 2. Square Grid / Bar Division Generator
+        function generateSquareSVG(size, d) {
+            let paths = '';
+            const padding = 20;
+            const w = size - padding * 2;
+            const h = size - padding * 2;
+
+            // Intelligent grid division calculation
+            let cols = 1, rows = d;
+            if (d === 4) { cols = 2; rows = 2; }
+            else if (d === 6) { cols = 3; rows = 2; }
+            else if (d === 8) { cols = 4; rows = 2; }
+            else if (d === 9) { cols = 3; rows = 3; }
+            else if (d === 10) { cols = 5; rows = 2; }
+            else if (d === 12) { cols = 4; rows = 3; }
+            else if (d === 15) { cols = 5; rows = 3; }
+            else if (d === 16) { cols = 4; rows = 4; }
+            else if (d === 20) { cols = 5; rows = 4; }
+            else if (d === 24) { cols = 6; rows = 4; }
+
+            const cellW = w / cols;
+            const cellH = h / rows;
+
+            for (let i = 0; i < d; i++) {
+                const r = Math.floor(i / cols);
+                const c = i % cols;
+                const x = padding + c * cellW;
+                const y = padding + r * cellH;
+
+                const isShaded = state.shadedSlices.has(i);
+                const fillColor = isShaded ? state.currentColor : '#F3F4F6';
+
+                paths += `<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="${fillColor}" stroke="#374151" stroke-width="2.5" class="shape-sector" onclick="toggleSlice(${i})"/>`;
+            }
+            return paths;
+        }
+
+        // 3. Rectangle Horizontal Chocolate Bar Generator
+        function generateRectangleSVG(size, d) {
+            let paths = '';
+            const paddingX = 15;
+            const paddingY = 60;
+            const w = size - paddingX * 2;
+            const h = size - paddingY * 2;
+
+            const sliceWidth = w / d;
+
+            for (let i = 0; i < d; i++) {
+                const x = paddingX + i * sliceWidth;
+                const y = paddingY;
+
+                const isShaded = state.shadedSlices.has(i);
+                const fillColor = isShaded ? state.currentColor : '#F3F4F6';
+
+                paths += `<rect x="${x}" y="${y}" width="${sliceWidth}" height="${h}" rx="2" fill="${fillColor}" stroke="#374151" stroke-width="2.5" class="shape-sector" onclick="toggleSlice(${i})"/>`;
+            }
+            return paths;
+        }
+
+        // 4. Hexagon Sector Generator
+        function generateHexagonSVG(cx, cy, r, d) {
+            let paths = '';
+            const angleStep = (2 * Math.PI) / d;
+
+            for (let i = 0; i < d; i++) {
+                const startAngle = i * angleStep - Math.PI / 2;
+                const endAngle = (i + 1) * angleStep - Math.PI / 2;
+
+                const x1 = cx + r * Math.cos(startAngle);
+                const y1 = cy + r * Math.sin(startAngle);
+                const x2 = cx + r * Math.cos(endAngle);
+                const y2 = cy + r * Math.sin(endAngle);
+
+                const isShaded = state.shadedSlices.has(i);
+                const fillColor = isShaded ? state.currentColor : '#F3F4F6';
+
+                const pathData = `M ${cx} ${cy} L ${x1} ${y1} L ${x2} ${y2} Z`;
+                paths += `<path d="${pathData}" fill="${fillColor}" stroke="#374151" stroke-width="2.5" stroke-linejoin="round" class="shape-sector" onclick="toggleSlice(${i})"/>`;
+            }
+            return paths;
+        }
+
+        // 5. Star Radial Sectors Generator
+        function generateStarSVG(cx, cy, outerRadius, d) {
+            let paths = '';
+            const innerRadius = outerRadius * 0.5;
+            const numPoints = 5;
+            
+            // Render underlying star background for outline aesthetic
+            let starOutlinePoints = [];
+            for (let i = 0; i < numPoints * 2; i++) {
+                const r = (i % 2 === 0) ? outerRadius : innerRadius;
+                const a = (i * Math.PI) / numPoints - Math.PI / 2;
+                starOutlinePoints.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`);
+            }
+
+            // Divide visually radial sectors
+            const angleStep = (2 * Math.PI) / d;
+
+            for (let i = 0; i < d; i++) {
+                const startAngle = i * angleStep - Math.PI / 2;
+                const endAngle = (i + 1) * angleStep - Math.PI / 2;
+
+                const x1 = cx + outerRadius * Math.cos(startAngle);
+                const y1 = cy + outerRadius * Math.sin(startAngle);
+                const x2 = cx + outerRadius * Math.cos(endAngle);
+                const y2 = cy + outerRadius * Math.sin(endAngle);
+
+                const isShaded = state.shadedSlices.has(i);
+                const fillColor = isShaded ? state.currentColor : '#F3F4F6';
+
+                const pathData = `M ${cx} ${cy} L ${x1} ${y1} L ${x2} ${y2} Z`;
+                paths += `<path d="${pathData}" fill="${fillColor}" stroke="#374151" stroke-width="2.5" stroke-linejoin="round" class="shape-sector" onclick="toggleSlice(${i})"/>`;
+            }
+
+            // Overlay Star Border
+            paths += `<polygon points="${starOutlinePoints.join(' ')}" fill="none" stroke="#374151" stroke-width="3" pointer-events="none"/>`;
+
+            return paths;
+        }
+
+        // --- Mathematical Displays & Word Formatter ---
+        function updateAllDisplays() {
+            const num = state.numerator;
+            const den = state.denominator;
+
+            // Badges
+            document.getElementById('shaded-count-badge').innerText = num;
+            document.getElementById('total-count-badge').innerText = den;
+
+            // Math Box
+            document.getElementById('math-numerator').innerText = num;
+            document.getElementById('math-denominator').innerText = den;
+
+            // Words
+            const wordName = getFractionWord(num, den);
+            document.getElementById('fraction-word-display').innerText = capitalizeFirst(wordName);
+            document.getElementById('fraction-desc-display').innerText = `${num} equal part${num === 1 ? '' : 's'} colored out of ${den}`;
+
+            // Math Equivalents
+            const decimalVal = (num / den).toFixed(2);
+            const percentVal = Math.round((num / den) * 100) + '%';
+            const simplified = simplifyFraction(num, den);
+
+            document.getElementById('decimal-display').innerText = decimalVal;
+            document.getElementById('percent-display').innerText = percentVal;
+            document.getElementById('simplified-display').innerText = `${simplified.num}/${simplified.den}`;
+        }
+
+        function getFractionWord(num, den) {
+            if (num === 0) return `Zero ${denominatorPlurals[den] ? denominatorPlurals[den][1] : 'parts'}`;
+            if (num === den) return `One whole (${numberWords[num]} ${denominatorPlurals[den] ? denominatorPlurals[den][1] : ''})`;
+
+            const numWord = numberWords[num] || num;
+            const denEntry = denominatorPlurals[den] || [den + "th", den + "ths"];
+            const denWord = num === 1 ? denEntry[0] : denEntry[1];
+
+            return `${numWord} ${denWord}`;
+        }
+
+        function simplifyFraction(num, den) {
+            if (num === 0) return { num: 0, den: 1 };
+            const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+            const common = gcd(num, den);
+            return { num: num / common, den: den / common };
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Web Speech API for Reading aloud
+        function speakFraction() {
+            if ('speechSynthesis' in window) {
+                const text = getFractionWord(state.numerator, state.denominator);
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.pitch = 1.2;
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // --- Challenge / Quiz Mode Mechanics ---
+        function switchMode(mode) {
+            state.mode = mode;
+            playSound('click');
+
+            document.getElementById('tab-explore').classList.toggle('active', mode === 'explore');
+            document.getElementById('tab-quiz').classList.toggle('active', mode === 'quiz');
+
+            const quizCard = document.getElementById('quiz-card');
+            if (mode === 'quiz') {
+                quizCard.classList.remove('hidden');
+                quizCard.classList.add('flex');
+                generateNewQuizTarget();
+            } else {
+                quizCard.classList.add('hidden');
+                quizCard.classList.remove('flex');
+            }
+        }
+
+        function generateNewQuizTarget() {
+            const possibleDenominators = [2, 3, 4, 5, 6, 8, 10, 12];
+            const den = possibleDenominators[Math.floor(Math.random() * possibleDenominators.length)];
+            const num = Math.floor(Math.random() * (den + 1));
+
+            state.quizTarget = { num, den };
+
+            document.getElementById('quiz-target-text').innerText = `${num} / ${den}`;
+            document.getElementById('quiz-target-words').innerText = capitalizeFirst(getFractionWord(num, den));
+        }
+
+        function checkQuizAnswer() {
+            if (state.numerator === state.quizTarget.num && state.denominator === state.quizTarget.den) {
+                playSound('win');
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                state.score += 10;
+                document.getElementById('quiz-score').innerText = `Score: ${state.score}`;
+                setTimeout(() => {
+                    generateNewQuizTarget();
+                }, 1500);
+            } else {
+                playSound('reset');
+                alert(`Almost there! Make sure denominator is ${state.quizTarget.den} and numerator is ${state.quizTarget.num}.`);
+            }
+        }
+    </script>
+</body>
+</html>
