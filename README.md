@@ -8,3 +8,6 @@ These games have limitations but can be run on any browser.
 
 [Division - Drag & Drop](https://curiousbhakti.github.io/math_games_for_kids/kids_math_division_adventure.html)
 
+[Factors & Multiples](https://curiousbhakti.github.io/math_games_for_kids/factor_multiple_kingdom.html)
+
+[Fractions](https://curiousbhakti.github.io/math_games_for_kids/fraction_fun_land.html)
